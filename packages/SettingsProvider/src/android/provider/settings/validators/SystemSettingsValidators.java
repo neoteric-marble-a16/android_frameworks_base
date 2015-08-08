@@ -277,5 +277,6 @@ public class SystemSettingsValidators {
         VALIDATORS.put(System.CV_ENABLED,
                 new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(System.POWER_SHARE_THRESHOLD, new InclusiveIntegerRangeValidator(1, 99));
+	VALIDATORS.put(System.THREE_FINGER_GESTURE, BOOLEAN_VALIDATOR);
     }
 }
