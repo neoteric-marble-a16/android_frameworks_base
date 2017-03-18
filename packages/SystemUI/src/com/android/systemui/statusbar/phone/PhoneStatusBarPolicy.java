@@ -125,6 +125,9 @@ public class PhoneStatusBarPolicy
     private static final String TAG = "PhoneStatusBarPolicy";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
 
+    private static final String BLUETOOTH_SHOW_BATTERY =
+            "system:" + Settings.System.BLUETOOTH_SHOW_BATTERY;
+
     static final int LOCATION_STATUS_ICON_ID = PrivacyType.TYPE_LOCATION.getIconId();
     private static final String NETWORK_TRAFFIC_ENABLED =
             "system:" + Settings.System.NETWORK_TRAFFIC_ENABLED;
@@ -204,6 +207,8 @@ public class PhoneStatusBarPolicy
     private TunerService mTunerService;
 
     private boolean mShowNetworkTraffic;
+
+    private boolean mShowBluetoothBattery;
 
     @Inject
     public PhoneStatusBarPolicy(Context context, StatusBarIconController iconController,
@@ -324,6 +329,8 @@ public class PhoneStatusBarPolicy
         updateTTY();
 
         // bluetooth status
+        mShowBluetoothBattery = Settings.System.getIntForUser(mContext.getContentResolver(),
+            BLUETOOTH_SHOW_BATTERY, 1, UserHandle.USER_CURRENT) != 0;
         updateBluetooth();
 
         // Alarm clock
@@ -435,6 +442,7 @@ public class PhoneStatusBarPolicy
         mCommandQueue.addCallback(this);
 
         mTunerService.addTunable(this, NETWORK_TRAFFIC_ENABLED);
+        mTunerService.addTunable(this, BLUETOOTH_SHOW_BATTERY);
     }
 
     private String getManagedProfileAccessibilityString() {
@@ -488,6 +496,11 @@ public class PhoneStatusBarPolicy
                 mShowNetworkTraffic =
                         TunerService.parseIntegerSwitch(newValue, false);
                 updateNetworkTraffic();
+                break;
+            case BLUETOOTH_SHOW_BATTERY:
+                mShowBluetoothBattery =
+                        TunerService.parseIntegerSwitch(newValue, true);
+                updateBluetooth();
                 break;
             default:
                 break;
@@ -621,7 +634,7 @@ public class PhoneStatusBarPolicy
             if (mBluetooth.isBluetoothConnected()
                     && (mBluetooth.isBluetoothAudioActive()
                     || !mBluetooth.isBluetoothAudioProfileOnly())) {
-                int batteryLevel = mBluetooth.getBatteryLevel();
+                int batteryLevel = mShowBluetoothBattery ? mBluetooth.getBatteryLevel() : -1;
                 if (batteryLevel == 100) {
                     iconId = R.drawable.stat_sys_data_bluetooth_connected_battery_9;
                 } else if (batteryLevel >= 90) {
