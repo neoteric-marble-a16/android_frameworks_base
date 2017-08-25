@@ -2435,7 +2435,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
             // Don't override if a valid battery status update has come in
             final BatteryStatus status = new BatteryStatus(BATTERY_STATUS_UNKNOWN,
                     /* level= */ level, /* plugged= */ 0, CHARGING_POLICY_DEFAULT,
-                    /* maxChargingWattage= */0, /* present= */true);
+                    /* maxChargingWattage= */0, /*oemFastChargeStatus*/false, /* present= */true);
             mMainExecutor.execute(() -> {
                 if (mBatteryStatus == null) {
                     handleBatteryUpdate(status);
@@ -3814,6 +3814,11 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
 
         // change in the incompatible charger
         if (!old.incompatibleCharger.equals(current.incompatibleCharger)) {
+            return true;
+        }
+
+	// change in oem fast charging while plugged in
+        if (nowPluggedIn && current.oemFastChargeStatus != old.oemFastChargeStatus) {
             return true;
         }
 
