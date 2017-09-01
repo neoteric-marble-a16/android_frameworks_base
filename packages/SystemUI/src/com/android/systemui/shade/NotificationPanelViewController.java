@@ -68,6 +68,7 @@ import android.util.MathUtils;
 import android.view.Display;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -216,6 +217,8 @@ import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 
+import com.android.internal.util.neoteric.NeotericUtils;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -354,6 +357,11 @@ public final class NotificationPanelViewController implements
     private TrackingStartedListener mTrackingStartedListener;
     private OpenCloseListener mOpenCloseListener;
     private GestureRecorder mGestureRecorder;
+
+    private GestureDetector mDoubleTapToSleepGesture;
+    private boolean mIsLockscreenDoubleTapEnabled;
+    private int mStatusBarHeaderHeight;
+    protected boolean mIsSbDoubleTapEnabled;
 
     private boolean mDozing;
     private boolean mDozingOnDown;
@@ -805,6 +813,15 @@ public final class NotificationPanelViewController implements
         mKeyguardUnfoldTransition = unfoldComponent.map(
                 SysUIUnfoldComponent::getKeyguardUnfoldTransition);
 
+        mDoubleTapToSleepGesture = new GestureDetector(mView.getContext(),
+                new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                NeotericUtils.switchScreenOff(mView.getContext());
+                return true;
+            }
+        });
+
         mKeyguardClockInteractor = keyguardClockInteractor;
         mWallpaperFocalAreaViewModel = wallpaperFocalAreaViewModel;
         KeyguardTouchViewBinder.bind(
@@ -995,6 +1012,8 @@ public final class NotificationPanelViewController implements
                 R.dimen.pulse_expansion_max_top_overshoot);
         mSplitShadeScrimTransitionDistance = mResources.getDimensionPixelSize(
                 R.dimen.split_shade_scrim_transition_distance);
+        mStatusBarHeaderHeight = mResources.getDimensionPixelSize(
+                R.dimen.status_bar_height);
         // TODO (b/265193930): remove this and make QsController listen to NotificationPanelViews
         mQsController.loadDimens();
     }
@@ -2422,6 +2441,14 @@ public final class NotificationPanelViewController implements
         mNotificationStackScrollLayoutController.setPulsing(pulsing, animatePulse);
 
         updateKeyguardStatusViewAlignment();
+    }
+
+    public void setLockscreenDoubleTapToSleep(boolean isDoubleTapEnabled) {
+        mIsLockscreenDoubleTapEnabled = isDoubleTapEnabled;
+    }
+
+    public void setSbDoubleTapToSleep(boolean isDoubleTapEnabled) {
+        mIsSbDoubleTapEnabled = isDoubleTapEnabled;
     }
 
     public void performHapticFeedback(int constant) {
@@ -4007,6 +4034,14 @@ public final class NotificationPanelViewController implements
             if (mLastEventSynthesizedDown && event.getAction() == MotionEvent.ACTION_UP) {
                 expand(true /* animate */);
             }
+
+            if ((mIsLockscreenDoubleTapEnabled && !mPulsing && !mDozing
+                    && mBarState == StatusBarState.KEYGUARD) ||
+                    (!mQsController.getExpanded() && mIsSbDoubleTapEnabled
+                    && event.getY() < mStatusBarHeaderHeight)) {
+                mDoubleTapToSleepGesture.onTouchEvent(event);
+            }
+
             initDownStates(event);
 
             // If pulse is expanding already, let's give it the touch. There are situations
@@ -4145,7 +4180,7 @@ public final class NotificationPanelViewController implements
                         onTrackingStarted();
                     }
                     if (isFullyCollapsed() && !mHeadsUpManager.hasPinnedHeadsUp()
-                            && !mCentralSurfaces.isBouncerShowing()) {
+                            && !mCentralSurfaces.isBouncerShowing() && !mIsSbDoubleTapEnabled) {
                         startOpening(event);
                     }
                     break;
