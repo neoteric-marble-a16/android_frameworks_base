@@ -38,4 +38,8 @@
     <!-- Font family -->
     <java-symbol type="string" name="config_bodyFontFamily" />
     <java-symbol type="string" name="config_bodyFontFamilyMedium" />
+
+    <!-- Device keyhandlers -->
+    <java-symbol type="array" name="config_deviceKeyHandlerLibs" />
+    <java-symbol type="array" name="config_deviceKeyHandlerClasses" />
 </resources>
