@@ -543,6 +543,7 @@ android_library {
         "bcsmartspace-google",
     ],
     manifest: "AndroidManifest.xml",
+    additional_manifests: ["NeotericManifest.xml"],
     libs: [
         "android.car",
 // QTI_BEGIN: 2021-02-09: Telephony: Change to move IExtTelephony to IExtPhone

@@ -33,4 +33,6 @@
     <string name="tristate_rotation_90">Landscape (90°)</string>
     <string name="tristate_rotation_270">Landscape (270°)</string>
 
+    <!-- Status bar - icons -->
+    <string name="status_bar_icons_title">Status bar icons</string>
 </resources>
