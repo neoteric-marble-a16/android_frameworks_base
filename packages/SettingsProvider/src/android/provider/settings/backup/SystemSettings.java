@@ -129,7 +129,8 @@ public class SystemSettings {
                 Settings.System.POWER_SHARE_THRESHOLD,
                 Settings.System.THREE_FINGER_GESTURE,
                 Settings.System.VOLBTN_MUSIC_CONTROLS,
-		        Settings.System.TORCH_POWER_BUTTON_GESTURE
+		        Settings.System.TORCH_POWER_BUTTON_GESTURE,
+		        Settings.System.ADVANCED_REBOOT
         ));
         if (Flags.backUpSmoothDisplayAndForcePeakRefreshRate()) {
             settings.add(Settings.System.PEAK_REFRESH_RATE);

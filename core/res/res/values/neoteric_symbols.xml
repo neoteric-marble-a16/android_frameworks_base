@@ -66,4 +66,7 @@
     <java-symbol type="string" name="battery_share_disabled_power_saver" />
     <java-symbol type="string" name="battery_share_disabled_low_battery" />
     <java-symbol type="drawable" name="ic_qs_powershare" />
+
+    <!-- Defines the actions shown in advanced reboot submenu -->
+    <java-symbol type="array" name="config_restartActionsList" />
 </resources>

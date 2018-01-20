@@ -74,4 +74,12 @@
 
     <!-- Power share thresholds -->
     <integer name="config_defPowerShareThreshold">20</integer>
+
+    <!-- Defines the actions shown in advanced reboot submenu -->
+    <string-array name="config_restartActionsList">
+        <item>restart</item>
+        <item>restart_recovery</item>
+        <item>restart_bootloader</item>
+	<item>restart_fastboot</item>
+     </string-array>
 </resources>
