@@ -24,6 +24,7 @@
 // QTI_END: 2025-04-15: Android_UI: SystemUI: Readapt Mobile Icon Features For Kairos part 1
 package com.android.systemui.statusbar.pipeline.mobile.domain.interactor
 import android.content.Context
+import android.provider.Settings
 import com.android.internal.telephony.flags.Flags
 // QTI_BEGIN: 2025-04-15: Android_UI: SystemUI: Readapt Mobile Icon Features For Kairos part 1
 import android.telephony.CarrierConfigManager
@@ -39,7 +40,9 @@ import com.android.settingslib.mobile.MobileIconCarrierIdOverridesImpl
 // QTI_BEGIN: 2025-04-15: Android_UI: SystemUI: Readapt Mobile Icon Features For Kairos part 1
 import com.android.settingslib.mobile.MobileMappings
 // QTI_END: 2025-04-15: Android_UI: SystemUI: Readapt Mobile Icon Features For Kairos part 1
+import com.android.systemui.common.coroutine.ConflatedCallbackFlow.conflatedCallbackFlow
 import com.android.systemui.dagger.qualifiers.Background
+import com.android.systemui.Dependency
 import com.android.systemui.log.table.TableLogBuffer
 import com.android.systemui.log.table.logDiffsForTable
 import com.android.systemui.statusbar.pipeline.mobile.data.model.DataConnectionState.Connected
@@ -63,7 +66,9 @@ import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityMod
 import com.android.systemui.statusbar.policy.FiveGServiceClient.FiveGServiceState
 import com.android.systemui.util.CarrierNameCustomization
 // QTI_END: 2025-04-15: Android_UI: SystemUI: Readapt Mobile Icon Features For Kairos part 1
+import com.android.systemui.tuner.TunerService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -219,6 +224,30 @@ class MobileIconInteractorImpl(
     override val isDataEnabled: StateFlow<Boolean> = connectionRepository.dataEnabled
     override val carrierNetworkChangeActive: StateFlow<Boolean> =
         connectionRepository.carrierNetworkChangeActive
+
+    private final val DATA_DISABLED_ICON: String =
+            "system:" + Settings.System.DATA_DISABLED_ICON;
+
+    private val shouldShowExclamationMark: StateFlow<Boolean> =
+        conflatedCallbackFlow {
+                val callback =
+                    object : TunerService.Tunable {
+                        override fun onTuningChanged(key: String, newValue: String?) {
+                            when (key) {
+                                DATA_DISABLED_ICON -> 
+                                    trySend(TunerService.parseIntegerSwitch(newValue, true))
+                            }
+                        }
+                    }
+                Dependency.get(TunerService::class.java).addTunable(callback, DATA_DISABLED_ICON)
+                awaitClose { Dependency.get(TunerService::class.java).removeTunable(callback) }
+            }
+            .stateIn(
+                scope,
+                started = SharingStarted.WhileSubscribed(),
+                true
+            )
+
     // True if there exists _any_ icon override for this carrierId. Note that overrides can include
     // any or none of the icon groups defined in MobileMappings, so we still need to check on a
     // per-network-type basis whether or not the given icon group is overridden
@@ -591,13 +620,15 @@ class MobileIconInteractorImpl(
                 isDataConnected,
                 isConnectionFailed,
                 isInService,
-                hideNoInternetState
-            ) { isDataEnabled, isDataConnected, isConnectionFailed, isInService,
-                        hideNoInternetState ->
-                !hideNoInternetState && (!isDataEnabled || (isDataConnected && isConnectionFailed)
-                        || !isInService)
+                hideNoInternetState,
+        ) { isDataEnabledVal, isDataConnectedVal, isConnectionFailedVal, isInServiceVal,
+                    hideNoInternetStateVal ->
+            !hideNoInternetStateVal && (!isDataEnabledVal || (isDataConnectedVal && isConnectionFailedVal)
+                    || !isInServiceVal)
+        }.combine(shouldShowExclamationMark) { showMark, shouldShow ->
+            showMark && shouldShow
 // QTI_END: 2025-04-15: Android_UI: SystemUI: Readapt Mobile Icon Features For Kairos part 1
-            }
+        }
             .stateIn(scope, SharingStarted.WhileSubscribed(), true)
     private val cellularShownLevel: StateFlow<Int> =
         combine(level, isInService, connectionRepository.inflateSignalStrength) {
