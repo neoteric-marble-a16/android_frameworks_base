@@ -13693,6 +13693,12 @@ public final class Settings {
          * @hide
          */
         public static final String KEYGUARD_AFFORDANCE_SINGLE_TAP = "keyguard_affordance_single_tap";
+
+	/**
+         * boolean value. toggles swipe up hint in gestural nav mode
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_HINT = "navigation_bar_hint";
     }
 
     /**
