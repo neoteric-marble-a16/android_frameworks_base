@@ -16,4 +16,10 @@
         <item name="android:textSize">11.0sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
+
+    <!-- Maximum horizontal offset of statusbar for burn-in protection -->
+    <dimen name="status_bar_offset_max_x">4dp</dimen>
+
+    <!-- Maximum vertical offset of statusbar for burn-in protection -->
+    <dimen name="status_bar_offset_max_y">4dp</dimen>
 </resources>

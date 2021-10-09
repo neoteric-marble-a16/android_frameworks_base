@@ -66,4 +66,10 @@
          Possible values: 3, 3.1, 3.2, 4, 4.1, 4.2
     -->
     <string name="config_screenRecorderAVCProfileLevel" translatable="false">4.2</string>
+
+    <!-- Whether to enable burn-in protection for statusbar and navbar -->
+    <bool name="config_statusBarBurnInProtection">@*android:bool/config_enableBurnInProtection</bool>
+
+    <!-- Interval between subsequent shifting of statusbar and navbar contents, in seconds -->
+    <integer name="config_statusBarBurnInProtectionShiftInterval">60</integer>
 </resources>
