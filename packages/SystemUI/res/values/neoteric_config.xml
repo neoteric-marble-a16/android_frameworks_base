@@ -56,6 +56,6 @@
 
     <!-- Extra Quick Settings tiles -->
     <string name="quick_settings_tiles_extra" translatable="false">
-	caffeine,heads_up,sync,ambient_display,usb_tether,aod,wifi,cell,vpn
+	caffeine,heads_up,sync,ambient_display,usb_tether,aod,wifi,cell,vpn,sound
     </string>
 </resources>
