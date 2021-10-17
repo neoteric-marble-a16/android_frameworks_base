@@ -47,4 +47,9 @@
     <dimen name="right_tri_state_up_bottom_right_radius">0.0dip</dimen>
     <dimen name="right_tri_state_up_top_left_radius">24.0dip</dimen>
     <dimen name="right_tri_state_up_top_right_radius">24.0dip</dimen>
+
+    <!-- Status bar notification ticker -->
+    <dimen name="ticker_start_padding">@dimen/status_bar_padding_start</dimen>
+    <dimen name="ticker_icon_end_margin">4dp</dimen>
+    <dimen name="ticker_text_end_padding">4dp</dimen>
 </resources>

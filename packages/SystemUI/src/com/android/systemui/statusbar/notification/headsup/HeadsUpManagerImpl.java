@@ -559,8 +559,8 @@ public class HeadsUpManagerImpl
         return 0;
     }
 
-    @VisibleForTesting
-    boolean shouldHeadsUpBecomePinned(@Nullable NotificationEntry entry) {
+    @Override
+    public boolean shouldHeadsUpBecomePinned(@Nullable NotificationEntry entry) {
         if (entry == null) {
             return false;
         }
