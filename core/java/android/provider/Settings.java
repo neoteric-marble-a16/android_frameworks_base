@@ -6882,6 +6882,12 @@ public final class Settings {
                 "status_bar_ticker_tick_duration";
 
         /**
+         * Whether to play notification sound and vibrations when the screen is on
+         * @hide
+         */
+        public static final String NOTIFICATION_SOUND_VIB_SCREEN_ON = "notification_sound_vib_screen_on";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *

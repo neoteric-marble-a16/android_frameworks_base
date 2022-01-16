@@ -131,7 +131,8 @@ public class SystemSettings {
                 Settings.System.VOLBTN_MUSIC_CONTROLS,
 		        Settings.System.TORCH_POWER_BUTTON_GESTURE,
 		        Settings.System.ADVANCED_REBOOT,
-        	    Settings.System.SMALL_LANDSCAPE_NOTIFICATION
+        	    Settings.System.SMALL_LANDSCAPE_NOTIFICATION,
+                Settings.System.NOTIFICATION_SOUND_VIB_SCREEN_ON
         ));
         if (Flags.backUpSmoothDisplayAndForcePeakRefreshRate()) {
             settings.add(Settings.System.PEAK_REFRESH_RATE);
