@@ -109,4 +109,10 @@
     <!-- Refresh rate tile -->
     <string name="refresh_rate_tile_label">Refresh rate</string>
     <string name="refresh_rate_adaptive">Adaptive</string>
+
+    <!-- Preferred network tile -->
+    <string name="quick_settings_preferred_network_label">Preferred network</string>
+    <string name="quick_settings_preferred_network_lte">4G / LTE</string>
+    <string name="quick_settings_preferred_network_nr">5G / NR</string>
+    <string name="quick_settings_preferred_network_unsupported">Unsupported</string>
 </resources>
