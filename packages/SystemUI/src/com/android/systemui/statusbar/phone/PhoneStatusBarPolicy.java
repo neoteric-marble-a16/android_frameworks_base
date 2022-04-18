@@ -386,6 +386,9 @@ public class PhoneStatusBarPolicy
         mCommandQueue.addCallback(this);
 
         mTunerService.addTunable(this, BLUETOOTH_SHOW_BATTERY);
+
+        // Get initial user setup state
+        onUserSetupChanged();
     }
 
     private String getManagedProfileAccessibilityString() {
