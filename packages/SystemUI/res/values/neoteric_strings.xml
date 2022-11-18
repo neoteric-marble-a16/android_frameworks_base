@@ -105,4 +105,8 @@
     <!-- Language toggle tile -->
     <string name="quick_settings_locale_label">Language</string>
     <string name="quick_settings_locale_more_locales_toast">Configure multiple languages first</string>
+
+    <!-- Refresh rate tile -->
+    <string name="refresh_rate_tile_label">Refresh rate</string>
+    <string name="refresh_rate_unknown">Unknown</string>
 </resources>
