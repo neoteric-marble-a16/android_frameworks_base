@@ -267,6 +267,7 @@ public class RecordingService extends Service implements ScreenMediaRecorderList
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, USER_ID_NOT_SPECIFIED);
                 int stopReason = intent.getIntExtra(EXTRA_STOP_REASON, mController.getStopReason());
                 stopService(userId, stopReason);
+                stopForeground(STOP_FOREGROUND_DETACH);
                 break;
 
             case ACTION_SHARE:
