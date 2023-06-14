@@ -16,6 +16,7 @@
 
 package com.android.systemui.neoteric
 
+import android.content.Context
 import com.android.systemui.qs.QsEventLogger
 import com.android.systemui.qs.pipeline.shared.TileSpec
 import com.android.systemui.qs.shared.model.TileCategory
@@ -23,9 +24,11 @@ import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.qs.tiles.AmbientDisplayTile
 import com.android.systemui.qs.tiles.AODTile
 import com.android.systemui.qs.tiles.CaffeineTile
+import com.android.systemui.qs.tiles.CellularTile
 import com.android.systemui.qs.tiles.HeadsUpTile
 import com.android.systemui.qs.tiles.SyncTile
 import com.android.systemui.qs.tiles.UsbTetherTile
+import com.android.systemui.qs.tiles.WifiTile
 import com.android.systemui.qs.tiles.base.shared.model.QSTileConfig;
 import com.android.systemui.qs.tiles.base.shared.model.QSTilePolicy;
 import com.android.systemui.qs.tiles.base.shared.model.QSTileUIConfig;
@@ -57,6 +60,12 @@ interface NeotericModule {
     @StringKey(CaffeineTile.TILE_SPEC)
     fun bindCaffeineTile(caffeineTile: CaffeineTile): QSTileImpl<*>
 
+    /** Inject CellularTile into tileMap in QSModule */
+    @Binds
+    @IntoMap
+    @StringKey(CellularTile.TILE_SPEC)
+    fun bindCellularTile(cellularTile: CellularTile): QSTileImpl<*>
+
     /** Inject HeadsUpTile into tileMap in QSModule */
     @Binds
     @IntoMap
@@ -74,6 +83,12 @@ interface NeotericModule {
     @IntoMap
     @StringKey(UsbTetherTile.TILE_SPEC)
     fun bindUsbTetherTile(usbTetherTile: UsbTetherTile): QSTileImpl<*>
+
+    /** Inject WifiTile into tileMap in QSModule */
+    @Binds
+    @IntoMap
+    @StringKey(WifiTile.TILE_SPEC)
+    fun bindWifiTile(wifiTile: WifiTile): QSTileImpl<*>
 
     companion object {
         @Provides
@@ -123,6 +138,21 @@ interface NeotericModule {
 
         @Provides
         @IntoMap
+        @StringKey(CellularTile.TILE_SPEC)
+        fun provideCellularTileConfig(uiEventLogger: QsEventLogger): QSTileConfig {
+            return QSTileConfig(
+                tileSpec = TileSpec.create(CellularTile.TILE_SPEC),
+                uiConfig = QSTileUIConfig.Resource(
+                    iconRes = R.drawable.ic_swap_vert,
+                    labelRes = R.string.quick_settings_cellular_detail_title
+                ),
+                instanceId = uiEventLogger.getNewInstanceId(),
+                category = TileCategory.CONNECTIVITY
+            )
+        }
+
+        @Provides
+        @IntoMap
         @StringKey(HeadsUpTile.TILE_SPEC)
         fun provideHeadsUpTileConfig(uiEventLogger: QsEventLogger): QSTileConfig {
             return QSTileConfig(
@@ -160,6 +190,23 @@ interface NeotericModule {
                 uiConfig = QSTileUIConfig.Resource(
                     iconRes = R.drawable.ic_qs_usb_tether,
                     labelRes = R.string.quick_settings_usb_tether_label
+                ),
+                instanceId = uiEventLogger.getNewInstanceId(),
+                category = TileCategory.CONNECTIVITY
+            )
+        }
+
+        @Provides
+        @IntoMap
+        @StringKey(WifiTile.TILE_SPEC)
+        fun provideWifiTileConfig(uiEventLogger: QsEventLogger, context: Context): QSTileConfig {
+            return QSTileConfig(
+                tileSpec = TileSpec.create(WifiTile.TILE_SPEC),
+                uiConfig = QSTileUIConfig.Resource(
+                    iconRes = context.resources.getIdentifier(
+                        "ic_signal_wifi_transient_animation", "drawable", "android"
+                    ),
+                    labelRes = R.string.quick_settings_wifi_label
                 ),
                 instanceId = uiEventLogger.getNewInstanceId(),
                 category = TileCategory.CONNECTIVITY
