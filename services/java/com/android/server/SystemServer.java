@@ -310,6 +310,7 @@ import com.android.server.webkit.WebViewUpdateService;
 import com.android.server.wm.ActivityTaskManagerService;
 import com.android.server.wm.WindowManagerGlobalLock;
 import com.android.server.wm.WindowManagerService;
+import com.android.server.neoteric.CustomDeviceConfigService;
 
 import dalvik.system.VMRuntime;
 // QTI_BEGIN: 2018-02-17: Wigig: frameworks/base: Add WiGig support
@@ -2878,6 +2879,11 @@ public final class SystemServer implements Dumpable {
                 mSystemServiceManager.startService(BackgroundInstallControlService.class);
                 t.traceEnd();
             }
+
+            // CustomDeviceConfigService
+            t.traceBegin("StartCustomDeviceConfigService");
+            mSystemServiceManager.startService(CustomDeviceConfigService.class);
+            t.traceEnd();
         }
 
         t.traceBegin("StartMediaProjectionManager");
