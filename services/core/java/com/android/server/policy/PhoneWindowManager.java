@@ -2490,8 +2490,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         mHandler = new PolicyHandler(injector.getLooper());
-        mSwipeToScreenshot = new SwipeToScreenshotListener(mContext, () -> interceptScreenshotChord(
-                SCREENSHOT_KEY_OTHER, 0 /*pressDelay*/));
+        mSwipeToScreenshot = new SwipeToScreenshotListener(mContext, new SwipeToScreenshotListener.Callbacks() {
+            @Override
+            public void onSwipeThreeFinger() {
+                boolean ambientScreen = Settings.System.getIntForUser(mContext.getContentResolver(),
+                                    Settings.System.AMBIENT_SCREEN_SCREENSHOT_SWIPE, 0, UserHandle.USER_CURRENT) == 1;
+                IDreamManager dreamManager = getDreamManager();
+                try {
+                    if (dreamManager != null && dreamManager.isDreaming() && !ambientScreen) {
+                        return;
+                    }
+                } catch (RemoteException ignored) {
+                }
+                interceptScreenshotChord(SCREENSHOT_KEY_OTHER, 0 /*pressDelay*/);
+            }
+        });
         mWakeGestureListener = new MyWakeGestureListener(mContext, mHandler);
         mSettingsObserver = new SettingsObserver(mHandler);
         mSettingsObserver.observe();

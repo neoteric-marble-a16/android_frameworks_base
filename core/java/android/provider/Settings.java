@@ -6561,6 +6561,12 @@ public final class Settings {
         public static final String RECENTS_LOCKED_TASKS = "recents_locked_tasks";
 
         /**
+         * Whether to take a screenshot in ambient display
+         * @hide
+         */
+        public static final String AMBIENT_SCREEN_SCREENSHOT_SWIPE = "ambient_screen_screenshot_swipe";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
