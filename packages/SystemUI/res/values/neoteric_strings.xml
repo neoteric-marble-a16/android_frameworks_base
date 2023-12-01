@@ -35,4 +35,6 @@
 
     <!-- Status bar - icons -->
     <string name="status_bar_icons_title">Status bar icons</string>
+    <!-- WiFi standard numbering on statusbar -->
+    <string name="status_bar_wifi_standard">Wi-Fi standard number</string>
 </resources>
