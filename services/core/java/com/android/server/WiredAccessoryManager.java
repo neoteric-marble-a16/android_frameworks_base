@@ -489,7 +489,8 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 // QTI_END: 2023-06-16: Audio: WiredAccessoryManager: support for DP/HDMI display on soc:qcom,msm-ext-disp.
                         int len = file.read(buffer, 0, 1024);
                         file.close();
-                        curState = Integer.parseInt((new String(buffer, 0, len)).trim());
+                        curState = Integer.parseInt(
+                                (new String(buffer, 0, len).replaceAll("\\D+","")).trim());
 
                         if (curState > 0) {
 // QTI_BEGIN: 2023-06-16: Audio: WiredAccessoryManager: support for DP/HDMI display on soc:qcom,msm-ext-disp.
