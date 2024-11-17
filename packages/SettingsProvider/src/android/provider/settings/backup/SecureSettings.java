@@ -307,6 +307,7 @@ public class SecureSettings {
 	Settings.Secure.BERRY_BLACK_THEME,
         Settings.Secure.DOZE_PICK_UP_GESTURE_AMBIENT,
         Settings.Secure.DOZE_TAP_GESTURE_AMBIENT,
-        Settings.Secure.DOZE_ON_CHARGE
+        Settings.Secure.DOZE_ON_CHARGE,
+	Settings.Secure.TETHERING_ALLOW_VPN_UPSTREAMS
     };
 }
