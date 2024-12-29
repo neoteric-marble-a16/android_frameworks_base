@@ -38,7 +38,6 @@ open class BaseMediaProjectionPermissionViewBinder(
     @ScreenShareMode val defaultSelectedMode: Int = screenShareOptions.first().mode,
 ) : AdapterView.OnItemSelectedListener {
     protected lateinit var containerView: View
-    private lateinit var warning: TextView
     private lateinit var startButton: TextView
     private lateinit var screenShareModeSpinner: Spinner
     var selectedScreenShareOption: ScreenShareOption =
@@ -55,7 +54,6 @@ open class BaseMediaProjectionPermissionViewBinder(
 
     open fun bind(view: View) {
         containerView = view
-        warning = containerView.requireViewById(R.id.text_warning)
         startButton = containerView.requireViewById(android.R.id.button1)
         initScreenShareOptions()
         createOptionsView(getOptionsViewLayoutId())
@@ -69,7 +67,6 @@ open class BaseMediaProjectionPermissionViewBinder(
 
     /** Sets fields on the views that change based on which option is selected. */
     private fun setOptionSpecificFields() {
-        warning.text = warningText
         startButton.text = startButtonText
     }
 
@@ -101,9 +98,6 @@ open class BaseMediaProjectionPermissionViewBinder(
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) {}
-
-    private val warningText: String
-        get() = containerView.context.getString(selectedScreenShareOption.warningText, appName)
 
     private val startButtonText: String
         get() = containerView.context.getString(selectedScreenShareOption.startButtonText)
