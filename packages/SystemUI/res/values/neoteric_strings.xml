@@ -108,5 +108,5 @@
 
     <!-- Refresh rate tile -->
     <string name="refresh_rate_tile_label">Refresh rate</string>
-    <string name="refresh_rate_unknown">Unknown</string>
+    <string name="refresh_rate_adaptive">Adaptive</string>
 </resources>
