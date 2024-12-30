@@ -87,22 +87,6 @@ public class PowerShareTile extends QSTileImpl<BooleanState>
         }
 
         mBatteryController = batteryController;
-        mNotificationManager = mContext.getSystemService(NotificationManager.class);
-
-        NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID,
-                mContext.getString(R.string.quick_settings_powershare_label),
-                NotificationManager.IMPORTANCE_DEFAULT);
-        mNotificationManager.createNotificationChannel(notificationChannel);
-
-        Notification.Builder builder = new Notification.Builder(mContext, CHANNEL_ID);
-        builder.setContentTitle(
-                mContext.getString(R.string.quick_settings_powershare_enabled_label));
-        builder.setSmallIcon(R.drawable.ic_qs_powershare);
-        builder.setOnlyAlertOnce(true);
-        mNotification = builder.build();
-        mNotification.flags |= Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
-        mNotification.visibility = Notification.VISIBILITY_PUBLIC;
-
         batteryController.addCallback(this);
     }
 
@@ -132,11 +116,7 @@ public class PowerShareTile extends QSTileImpl<BooleanState>
         }
 
         try {
-            if (mPowerShare.isEnabled()) {
-                mNotificationManager.notify(NOTIFICATION_ID, mNotification);
-            } else {
-                mNotificationManager.cancel(NOTIFICATION_ID);
-            }
+            mPowerShare.isEnabled();
         } catch (RemoteException ex) {
             ex.printStackTrace();
         }
