@@ -289,7 +289,7 @@ interface NeotericModule {
             return QSTileConfig(
                 tileSpec = TileSpec.create(PowerShareTile.TILE_SPEC),
                 uiConfig = QSTileUIConfig.Resource(
-                    iconRes = R.drawable.ic_qs_powershare,
+                    iconRes = com.android.internal.R.drawable.ic_qs_powershare,
                     labelRes = R.string.quick_settings_powershare_label
                 ),
                 instanceId = uiEventLogger.getNewInstanceId(),

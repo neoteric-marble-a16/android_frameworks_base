@@ -6544,6 +6544,12 @@ public final class Settings {
         };
 
         /**
+         * Power share threshold
+         * @hide
+         */
+        public static final String POWER_SHARE_THRESHOLD = "powershare_threshold";
+
+        /**
          * These are all public system settings
          *
          * @hide

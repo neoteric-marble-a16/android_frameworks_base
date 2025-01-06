@@ -105,6 +105,8 @@ import android.graphics.fonts.FontManager;
 import android.hardware.ConsumerIrManager;
 import android.hardware.ISensorPrivacyManager;
 import android.hardware.ISerialManager;
+import android.hardware.PowerShareManager;
+import android.hardware.IPowerShareManager;
 import android.hardware.SensorManager;
 import android.hardware.SensorPrivacyManager;
 import android.hardware.SerialManager;
@@ -291,6 +293,8 @@ import com.android.internal.util.Preconditions;
 
 import java.util.Map;
 import java.util.Objects;
+
+import vendor.lineage.powershare.IPowerShare;
 
 /**
  * Manages all of the system services that can be returned by {@link Context#getSystemService}.
@@ -1065,6 +1069,19 @@ public final class SystemServiceRegistry {
                         ITvAdManager service =
                                 ITvAdManager.Stub.asInterface(iBinder);
                         return new TvAdManager(service, ctx.getUserId());
+                    }});
+
+        registerService(Context.POWER_SHARE_SERVICE, PowerShareManager.class,
+                new CachedServiceFetcher<PowerShareManager>() {
+                    @Override
+                    public PowerShareManager createService(ContextImpl ctx) throws ServiceNotFoundException {
+                        if (IPowerShare.Stub.asInterface(ServiceManager.
+                                getService("vendor.lineage.powershare.IPowerShare/default")) == null) {
+                            return null;
+                        }
+                        IBinder b = ServiceManager.getServiceOrThrow(Context.POWER_SHARE_SERVICE);
+                        IPowerShareManager service = IPowerShareManager.Stub.asInterface(b);
+                        return new PowerShareManager(service);
                     }});
 
         registerService(Context.TV_INPUT_SERVICE, TvInputManager.class,
