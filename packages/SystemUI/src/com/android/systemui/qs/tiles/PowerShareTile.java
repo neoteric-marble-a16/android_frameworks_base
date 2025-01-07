@@ -19,6 +19,7 @@ package com.android.systemui.qs.tiles;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.PowerShareManager;
@@ -116,7 +117,6 @@ public class PowerShareTile extends QSTileImpl<BooleanState>
     @Override
     public BooleanState newTileState() {
         BooleanState state = new BooleanState();
-        state.handlesLongClick = false;
         return state;
     }
 
@@ -131,7 +131,13 @@ public class PowerShareTile extends QSTileImpl<BooleanState>
 
     @Override
     public Intent getLongClickIntent() {
-        return null;
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings$BatteryShareSettingsActivity"
+        ));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return intent;
     }
 
     @Override
