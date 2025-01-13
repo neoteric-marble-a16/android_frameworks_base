@@ -32,6 +32,7 @@ import com.android.systemui.qs.QsEventLogger;
 import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.qs.tileimpl.QSTileImpl;
 import com.android.systemui.res.R;
+import com.android.systemui.statusbar.policy.BatteryController;
 
 import org.neoteric.display.DisplayRefreshRateHelper;
 
@@ -39,7 +40,7 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
-public class RefreshRateTile extends QSTileImpl<State> {
+public class RefreshRateTile extends QSTileImpl<State> implements BatteryController.BatteryStateChangeCallback {
 
     public static final String TILE_SPEC = "refresh_rate";
 
@@ -48,9 +49,11 @@ public class RefreshRateTile extends QSTileImpl<State> {
     private final ContentResolver mContentResolver;
     private final SettingsObserver mSettingsObserver;
     private final Icon mIcon;
+    private final BatteryController mBatteryController;
 
     private int mMinRefreshRate;
     private int mPeakRefreshRate;
+    private boolean isBatterySaverEnabled;
 
     @Inject
     public RefreshRateTile(
@@ -62,7 +65,8 @@ public class RefreshRateTile extends QSTileImpl<State> {
             MetricsLogger metricsLogger,
             StatusBarStateController statusBarStateController,
             ActivityStarter activityStarter,
-            QSLogger qsLogger) {
+            QSLogger qsLogger,
+            BatteryController batteryController) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
                 statusBarStateController, activityStarter, qsLogger);
 
@@ -70,12 +74,15 @@ public class RefreshRateTile extends QSTileImpl<State> {
         mSupportedRates = mHelper.getSupportedRefreshRateList();
         mContentResolver = mContext.getContentResolver();
         mSettingsObserver = new SettingsObserver(mainHandler);
+        mBatteryController = batteryController;
 
         mIcon = ResourceIcon.get(R.drawable.ic_refresh_rate);
 
         if (mSupportedRates.size() > 1) {
             mSettingsObserver.observe();
         }
+
+        mBatteryController.addCallback(this);
 
         updateRefreshRates();
     }
@@ -136,11 +143,17 @@ public class RefreshRateTile extends QSTileImpl<State> {
 
     @Override
     protected void handleUpdateState(State state, Object arg) {
-        state.state = Tile.STATE_ACTIVE;
         state.icon = mIcon;
         state.label = mContext.getString(R.string.refresh_rate_tile_label);
         state.contentDescription = state.label;
-        state.secondaryLabel = getRefreshRateLabel();
+
+        if (isBatterySaverEnabled) {
+            state.state = Tile.STATE_UNAVAILABLE;
+            state.secondaryLabel = null;
+        } else {
+            state.state = Tile.STATE_ACTIVE;
+            state.secondaryLabel = getRefreshRateLabel();
+        }
     }
 
     private String getRefreshRateLabel() {
@@ -156,7 +169,14 @@ public class RefreshRateTile extends QSTileImpl<State> {
     @Override
     public void destroy() {
         mSettingsObserver.unobserve();
+        mBatteryController.removeCallback(this);
         super.destroy();
+    }
+
+    @Override
+    public void onPowerSaveChanged(boolean isPowerSave) {
+        isBatterySaverEnabled = isPowerSave;
+        refreshState();
     }
 
     private class SettingsObserver extends ContentObserver {
