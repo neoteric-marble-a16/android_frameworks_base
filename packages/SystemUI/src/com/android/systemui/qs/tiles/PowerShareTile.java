@@ -16,9 +16,6 @@
 
 package com.android.systemui.qs.tiles;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -56,10 +53,6 @@ public class PowerShareTile extends QSTileImpl<BooleanState>
     public static final String TILE_SPEC = "powershare";
 
     private BatteryController mBatteryController;
-    private NotificationManager mNotificationManager;
-    private Notification mNotification;
-    private static final String CHANNEL_ID = TILE_SPEC;
-    private static final int NOTIFICATION_ID = 273298;
 
     private final PowerShareManager mPowerShareManager;
 
@@ -159,7 +152,7 @@ public class PowerShareTile extends QSTileImpl<BooleanState>
             return;
         }
 
-        state.icon = ResourceIcon.get(R.drawable.ic_qs_powershare);
+        state.icon = ResourceIcon.get(com.android.internal.R.drawable.ic_qs_powershare);
         state.value = mPowerShareManager.isEnabled();
         state.label = mContext.getString(R.string.quick_settings_powershare_label);
 

@@ -16,6 +16,9 @@
 
 package com.android.server.neoteric;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +28,7 @@ import android.hardware.IPowerShareManager;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager;
@@ -41,6 +45,8 @@ public class PowerShareService extends SystemService {
 
     private static final String TAG = "PowerShareService";
     private static final String POWERSHARE_SERVICE_NAME = "vendor.lineage.powershare.IPowerShare/default";
+    private static final String CHANNEL_ID = "powershare_notification_channel";
+    private static final int NOTIFICATION_ID = 1001;
 
     private final IPowerShare mPowerShare;
     private final Context mContext;
@@ -49,6 +55,8 @@ public class PowerShareService extends SystemService {
     private final int mDefThresholdValue;
 
     private BatteryManager mBatteryManager;
+    private PowerManager mPowerManager;
+    private NotificationManager mNotificationManager;
 
     public PowerShareService(Context context) {
         super(context);
@@ -70,14 +78,11 @@ public class PowerShareService extends SystemService {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
                 if (shouldTurnOffBatteryShare()) {
-                    try {
-                        if (mPowerShare != null && mPowerShare.isEnabled()) {
-                            mPowerShare.setEnabled(false);
-                            Log.d(TAG, "PowerShare disabled as battery percentage reached minimum threshold.");
-                        }
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
+                    disablePowerShare();
+                }
+            } else if (PowerManager.ACTION_POWER_SAVE_MODE_CHANGED.equals(intent.getAction())) {
+                if (mPowerManager.isPowerSaveMode()) {
+                    disablePowerShare();
                 }
             }
         }
@@ -89,13 +94,55 @@ public class PowerShareService extends SystemService {
                 Settings.System.POWER_SHARE_THRESHOLD, mDefThresholdValue,
                 UserHandle.USER_CURRENT);
 
-        // Log the comparison
-        Log.v(TAG, "Checking if PowerShare should turn off: current=" + currentBatteryLevel + ", threshold=" + threshold);
-
         return currentBatteryLevel <= threshold;
     }
 
-     private final IPowerShareManager.Stub mService = new IPowerShareManager.Stub() {
+    private void createNotificationChannel() {
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                mContext.getResources().getString(com.android.internal.R.string.battery_share_label),
+                NotificationManager.IMPORTANCE_HIGH
+        );
+        channel.setDescription(mContext.getResources().getString(com.android.internal.R.string.battery_share_notification_summary));
+        mNotificationManager.createNotificationChannel(channel);
+    }
+
+    private void showNotification() {
+        String contentText;
+        if (mPowerManager.isPowerSaveMode()) {
+            Log.d(TAG, "PowerShare disabled due to battery saver.");
+            contentText = mContext.getResources().getString(com.android.internal.R.string.battery_share_disabled_power_saver);
+        } else {
+            Log.d(TAG, "PowerShare disabled as battery percentage reached minimum threshold.");
+            contentText = mContext.getResources().getString(com.android.internal.R.string.battery_share_disabled_low_battery);
+        }
+
+        Notification notification = new Notification.Builder(mContext, CHANNEL_ID)
+            .setSmallIcon(com.android.internal.R.drawable.ic_qs_powershare)
+            .setContentTitle(mContext.getResources().getString(com.android.internal.R.string.battery_share_disabled))
+            .setContentText(contentText)
+            .setPriority(Notification.PRIORITY_HIGH)
+            .setAutoCancel(false)
+            .build();
+        mNotificationManager.notify(NOTIFICATION_ID, notification);
+    }
+
+    private void cancelNotification() {
+        mNotificationManager.cancel(NOTIFICATION_ID);
+    }
+
+    private void disablePowerShare() {
+        try {
+            if (mPowerShare != null && mPowerShare.isEnabled()) {
+                mPowerShare.setEnabled(false);
+                showNotification();
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private final IPowerShareManager.Stub mService = new IPowerShareManager.Stub() {
         @Override
         public boolean isEnabled() {
             try {
@@ -109,7 +156,20 @@ public class PowerShareService extends SystemService {
         @Override
         public boolean setEnabled(boolean enable) {
             try {
-                return mPowerShare.setEnabled(enable);
+                boolean currentState = mPowerShare.isEnabled();
+                if (currentState == enable) {
+                    return true;
+                }
+
+                boolean result = mPowerShare.setEnabled(enable);
+                if (result) {
+                    if (enable) {
+                        cancelNotification();
+                    } else {
+                        showNotification();
+                    }
+                }
+                return result;
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -149,9 +209,15 @@ public class PowerShareService extends SystemService {
         if (phase == SystemService.PHASE_SYSTEM_SERVICES_READY) {
             Log.d(TAG, "onBootPhase PHASE_SYSTEM_SERVICES_READY");
             mBatteryManager = mContext.getSystemService(BatteryManager.class);
+            mPowerManager = mContext.getSystemService(PowerManager.class);
+            mNotificationManager = mContext.getSystemService(NotificationManager.class);
+            createNotificationChannel();
         } else if (phase == SystemService.PHASE_BOOT_COMPLETED) {
             Log.d(TAG, "onBootPhase PHASE_BOOT_COMPLETED");
-            mContext.registerReceiver(mBatteryLevelReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+            filter.addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED);
+            mContext.registerReceiver(mBatteryLevelReceiver, filter);
         }
     }
 }
