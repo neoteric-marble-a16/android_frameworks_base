@@ -5339,6 +5339,7 @@ public class NotificationStackScrollLayout
                     childRow.setOnKeyguard(isOnLockscreen);
                 }
             }
+            mShelf.setOnKeyguard(isOnLockscreen);
         }
     }
 
@@ -5414,6 +5415,9 @@ public class NotificationStackScrollLayout
     public void setStatusBarState(int statusBarState) {
         mStatusBarState = statusBarState;
         mAmbientState.setStatusBarState(statusBarState);
+        if (!SceneContainerFlag.isEnabled()) {
+            mShelf.setOnKeyguard(statusBarState == StatusBarState.KEYGUARD);
+        }
         updateSpeedBumpIndex();
         updateDismissBehavior();
     }
