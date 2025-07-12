@@ -298,7 +298,7 @@
     <dimen name="notification_max_heads_up_height">136dp</dimen>
 
     <!-- Side padding on the side of notifications -->
-    <dimen name="notification_side_paddings">16dp</dimen>
+    <dimen name="notification_side_paddings">22dp</dimen>
 
     <!-- Width of inline notification menu item buttons -->
     <dimen name="notification_menu_item_width">112dp</dimen>
@@ -711,7 +711,7 @@
     <dimen name="qs_corner_radius">28dp</dimen>
     <dimen name="qs_tile_height">80dp</dimen>
     <dimen name="qs_tile_margin_horizontal">8dp</dimen>
-    <dimen name="qs_tile_margin_vertical">@dimen/qs_tile_margin_horizontal</dimen>
+    <dimen name="qs_tile_margin_vertical">20dp</dimen>
     <dimen name="qs_tile_margin_top_bottom">4dp</dimen>
     <dimen name="qs_brightness_margin_top">8dp</dimen>
     <dimen name="qs_brightness_margin_bottom">16dp</dimen>

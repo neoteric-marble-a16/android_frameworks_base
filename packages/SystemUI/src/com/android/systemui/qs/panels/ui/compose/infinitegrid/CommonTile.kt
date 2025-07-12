@@ -108,7 +108,7 @@ fun LargeTileContent(
     squishiness: () -> Float,
     isVisible: () -> Boolean = { true },
     accessibilityUiState: AccessibilityUiState? = null,
-    iconShape: RoundedCornerShape = RoundedCornerShape(CommonTileDefaults.InactiveCornerRadius),
+    iconShape: RoundedCornerShape = RoundedCornerShape(CommonTileDefaults.TileCornerRadius),
     toggleClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
@@ -118,15 +118,12 @@ fun LargeTileContent(
     ) {
         // Icon
         val longPressLabel = longPressLabel().takeIf { onLongClick != null }
-        val animatedBackgroundColor by
-            animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
         val focusBorderColor = MaterialTheme.colorScheme.secondary
         Box(
             modifier =
                 Modifier.size(CommonTileDefaults.ToggleTargetSize)
                     .clip(iconShape)
                     .verticalSquish(squishiness)
-                    .drawBehind { drawRect(animatedBackgroundColor) }
                     .thenIf(toggleClick != null) {
                         Modifier.borderOnFocus(color = focusBorderColor, iconShape.topEnd)
                             .combinedClickable(
@@ -321,12 +318,12 @@ object CommonTileDefaults {
     val LargeTileIconSize = 28.dp
     val SideIconWidth = 32.dp
     val SideIconHeight = 20.dp
-    val ToggleTargetSize = 56.dp
-    val TileHeight = 72.dp
-    val TileStartPadding = 8.dp
-    val TileEndPadding = 16.dp
-    val TileArrangementPadding = 6.dp
-    val InactiveCornerRadius = 50.dp
+    val ToggleTargetSize = 32.dp
+    val TileHeight = 74.dp
+    val TileStartPadding = 21.dp
+    val TileEndPadding = 12.dp
+    val TileArrangementPadding = 12.dp
+    val TileCornerRadius = 50.dp
     val TileLabelBlurWidth = 32.dp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000

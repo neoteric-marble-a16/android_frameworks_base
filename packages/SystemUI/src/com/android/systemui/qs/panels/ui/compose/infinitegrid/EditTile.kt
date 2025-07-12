@@ -42,6 +42,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,6 +56,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -138,8 +140,8 @@ import com.android.systemui.qs.panels.ui.compose.EditTileListState.Companion.INV
 import com.android.systemui.qs.panels.ui.compose.dragAndDropRemoveZone
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileList
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileSource
-import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileArrangementPadding
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ToggleTargetSize
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_DISTANCE
@@ -522,9 +524,10 @@ private fun CurrentTilesGrid(
 ) {
     val currentListState by rememberUpdatedState(listState)
     val totalRows = listState.tiles.lastOrNull()?.row ?: 0
+    val rowSpacing = 8.dp
     val totalHeight by
         animateDpAsState(
-            gridHeight(totalRows + 1, TileHeight, TileArrangementPadding, CurrentTilesGridPadding),
+            gridHeight(totalRows + 1, TileHeight, rowSpacing, CurrentTilesGridPadding),
             label = "QSEditCurrentTilesGridHeight",
         )
     val gridState = rememberLazyGridState()
@@ -533,49 +536,69 @@ private fun CurrentTilesGrid(
 
     val cells = listState.tiles
     val primaryColor = MaterialTheme.colorScheme.primary
-    TileLazyGrid(
-        state = gridState,
-        columns = GridCells.Fixed(columns),
-        contentPadding = PaddingValues(CurrentTilesGridPadding),
-        modifier =
-            Modifier.fillMaxWidth()
-                .height { totalHeight.roundToPx() }
-                .border(
-                    width = 2.dp,
-                    color = primaryColor,
-                    shape = RoundedCornerShape(GridBackgroundCornerRadius),
-                )
-                .dragAndDropTileList(gridState, { gridContentOffset }, listState) { spec ->
-                    onSetTiles(currentListState.tileSpecs())
-                    selectionState.select(spec)
-                }
-                .onGloballyPositioned { coordinates ->
-                    gridContentOffset = coordinates.positionInRoot()
-                }
-                .drawBehind {
-                    drawRoundRect(
-                        primaryColor,
-                        cornerRadius = CornerRadius(GridBackgroundCornerRadius.toPx()),
-                        alpha = .15f,
-                    )
-                }
-                .testTag(CURRENT_TILES_GRID_TEST_TAG),
+
+    val density = LocalDensity.current
+    var containerWidthPx by remember { mutableStateOf(0) }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onSizeChanged { containerWidthPx = it.width }
     ) {
-        EditTiles(
-            cells = cells,
-            dragAndDropState = listState,
-            selectionState = selectionState,
-            coroutineScope = coroutineScope,
-            largeTilesSpan = largeTilesSpan,
-            onRemoveTile = onRemoveTile,
-        ) { resizingOperation ->
-            when (resizingOperation) {
-                is TemporaryResizeOperation -> {
-                    currentListState.resizeTile(resizingOperation.spec, resizingOperation.toIcon)
-                }
-                is FinalResizeOperation -> {
-                    // Commit the new size of the tile
-                    onResize(resizingOperation.spec, resizingOperation.toIcon)
+        val containerWidth = if (containerWidthPx > 0) {
+            density.run { containerWidthPx.toDp() }
+        } else {
+            maxWidth
+        }
+        val columnSpacing = ((containerWidth - (TileHeight * columns)) / columns)
+            .coerceAtLeast(rowSpacing)
+        TileLazyGrid(
+            state = gridState,
+            columns = GridCells.Fixed(columns),
+            columnSpacing = columnSpacing,
+            rowSpacing = rowSpacing,
+            contentPadding = PaddingValues(CurrentTilesGridPadding),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height { totalHeight.roundToPx() }
+                    .border(
+                        width = 2.dp,
+                        color = primaryColor,
+                        shape = RoundedCornerShape(GridBackgroundCornerRadius),
+                    )
+                    .dragAndDropTileList(gridState, { gridContentOffset }, listState) { spec ->
+                        onSetTiles(currentListState.tileSpecs())
+                        selectionState.select(spec)
+                    }
+                    .onGloballyPositioned { coordinates ->
+                        gridContentOffset = coordinates.positionInRoot()
+                    }
+                    .drawBehind {
+                        drawRoundRect(
+                            primaryColor,
+                            cornerRadius = CornerRadius(GridBackgroundCornerRadius.toPx()),
+                            alpha = .15f,
+                        )
+                    }
+                    .testTag(CURRENT_TILES_GRID_TEST_TAG),
+        ) {
+            EditTiles(
+                cells = cells,
+                columnSpacing = columnSpacing,
+                dragAndDropState = listState,
+                selectionState = selectionState,
+                coroutineScope = coroutineScope,
+                largeTilesSpan = largeTilesSpan,
+                onRemoveTile = onRemoveTile,
+            ) { resizingOperation ->
+                when (resizingOperation) {
+                    is TemporaryResizeOperation -> {
+                        currentListState.resizeTile(resizingOperation.spec, resizingOperation.toIcon)
+                    }
+                    is FinalResizeOperation -> {
+                        // Commit the new size of the tile
+                        onResize(resizingOperation.spec, resizingOperation.toIcon)
+                    }
                 }
             }
         }
@@ -671,6 +694,7 @@ private fun GridCell.key(index: Int): Any {
  */
 fun LazyGridScope.EditTiles(
     cells: List<GridCell>,
+    columnSpacing: Dp,
     dragAndDropState: DragAndDropState,
     selectionState: MutableSelectionState,
     coroutineScope: CoroutineScope,
@@ -694,12 +718,13 @@ fun LazyGridScope.EditTiles(
                                 MaterialTheme.colorScheme.secondary.copy(
                                     alpha = EditModeTileDefaults.PLACEHOLDER_ALPHA
                                 ),
-                            shape = RoundedCornerShape(InactiveCornerRadius),
+                            shape = RoundedCornerShape(TileCornerRadius),
                         )
                     )
                 } else {
                     TileGridCell(
                         cell = cell,
+                        columnSpacing = columnSpacing,
                         index = index,
                         dragAndDropState = dragAndDropState,
                         selectionState = selectionState,
@@ -747,6 +772,7 @@ private fun rememberTileState(
 @Composable
 private fun TileGridCell(
     cell: TileGridCell,
+    columnSpacing: Dp,
     index: Int,
     dragAndDropState: DragAndDropState,
     selectionState: MutableSelectionState,
@@ -782,7 +808,7 @@ private fun TileGridCell(
     }
 
     val totalPadding =
-        with(LocalDensity.current) { (largeTilesSpan - 1) * TileArrangementPadding.roundToPx() }
+        with(LocalDensity.current) { (largeTilesSpan - 1) * columnSpacing.roundToPx() }
     val colors = EditModeTileDefaults.editTileColors()
     val toggleSizeLabel = stringResource(R.string.accessibility_qs_edit_toggle_tile_size_action)
     val togglePlacementModeLabel =
@@ -822,7 +848,7 @@ private fun TileGridCell(
             )
         Box(
             modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .semantics(mergeDescendants = true) {
                     this.stateDescription = stateDescription
                     contentDescription = cell.tile.label.text
@@ -905,7 +931,7 @@ private fun AvailableTileGridCell(
                     stateDescription?.let { this.stateDescription = it }
                 },
     ) {
-        Box(Modifier.fillMaxWidth().height(TileHeight)) {
+        Box(Modifier.size(TileHeight)) {
             val draggableModifier =
                 if (cell.isAvailable) {
                     Modifier.dragAndDropTileSource(
@@ -969,7 +995,7 @@ fun EditTile(
     val iconSizeDiff = CommonTileDefaults.IconSize - CommonTileDefaults.LargeTileIconSize
     val alpha by animateFloatAsState(if (tileState == TileState.GreyedOut) .4f else 1f)
     Row(
-        horizontalArrangement = spacedBy(6.dp),
+        horizontalArrangement = spacedBy(TileArrangementPadding),
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             Modifier.layout { measurable, constraints ->
@@ -1040,7 +1066,7 @@ private fun MeasureScope.iconHorizontalCenter(containerSize: Int): Float {
 
 private fun Modifier.tileBackground(color: () -> Color): Modifier {
     // Clip tile contents from overflowing past the tile
-    return clip(RoundedCornerShape(InactiveCornerRadius)).drawBehind { drawRect(color()) }
+    return clip(RoundedCornerShape(TileCornerRadius)).drawBehind { drawRect(color()) }
 }
 
 private object EditModeTileDefaults {
@@ -1055,7 +1081,6 @@ private object EditModeTileDefaults {
     fun editTileColors(): TileColors =
         TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect2,
-            iconBackground = Color.Transparent,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
