@@ -1263,7 +1263,7 @@ fun QuickSettingsLayout(
 ) {
     if (mediaInRow) {
         Column(
-            verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.Padding),
+            verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             brightness()
@@ -1277,7 +1277,7 @@ fun QuickSettingsLayout(
         }
     } else {
         Column(
-            verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.Padding),
+            verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             brightness()
