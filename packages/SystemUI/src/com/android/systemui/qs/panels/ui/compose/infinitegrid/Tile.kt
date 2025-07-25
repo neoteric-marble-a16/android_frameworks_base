@@ -157,7 +157,7 @@ fun Tile(
                 tile.state.collect { value = it.toIconProvider() }
             }
 
-        val colors = TileDefaults.getColorForState(uiState)
+        val colors = TileDefaults.getColorForState(uiState, iconOnly)
         val hapticsViewModel: TileHapticsViewModel? =
             rememberViewModel(traceName = "TileHapticsViewModel") {
                 tileHapticsViewModelFactoryProvider.getHapticsViewModelFactory()?.create(tile)
@@ -290,7 +290,7 @@ fun LargeStaticTile(
     iconProvider: IconProvider,
     modifier: Modifier = Modifier,
 ) {
-    val colors = TileDefaults.getColorForState(uiState = uiState)
+    val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = false)
 
     Box(
         modifier
@@ -357,6 +357,7 @@ fun Modifier.tileCombinedClickable(
 
 data class TileColors(
     val background: Color,
+    val iconBackground: Color,
     val label: Color,
     val secondaryLabel: Color,
     val icon: Color,
@@ -370,9 +371,33 @@ private object TileDefaults {
     fun activeIconTileColors(): TileColors =
         TileColors(
             background = MaterialTheme.colorScheme.primary,
+            iconBackground = MaterialTheme.colorScheme.primary,
             label = MaterialTheme.colorScheme.onPrimary,
             secondaryLabel = MaterialTheme.colorScheme.onPrimary,
             icon = MaterialTheme.colorScheme.onPrimary,
+        )
+
+    /** An active tile with dual target only show the active color on the icon */
+    @Composable
+    @ReadOnlyComposable
+    fun activeDualTargetTileColors(): TileColors =
+        TileColors(
+            background = LocalAndroidColorScheme.current.surfaceEffect2,
+            iconBackground = MaterialTheme.colorScheme.primary,
+            label = MaterialTheme.colorScheme.onSurface,
+            secondaryLabel = MaterialTheme.colorScheme.onSurface,
+            icon = MaterialTheme.colorScheme.onPrimary,
+        )
+
+    @Composable
+    @ReadOnlyComposable
+    fun inactiveDualTargetTileColors(): TileColors =
+        TileColors(
+            background = LocalAndroidColorScheme.current.surfaceEffect2,
+            iconBackground = LocalAndroidColorScheme.current.surfaceEffect3,
+            label = MaterialTheme.colorScheme.onSurface,
+            secondaryLabel = MaterialTheme.colorScheme.onSurface,
+            icon = MaterialTheme.colorScheme.onSurface,
         )
 
     @Composable
@@ -380,6 +405,7 @@ private object TileDefaults {
     fun inactiveTileColors(): TileColors =
         TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect2,
+            iconBackground = Color.Transparent,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
@@ -390,6 +416,7 @@ private object TileDefaults {
     fun unavailableTileColors(): TileColors {
         return TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect2,
+            iconBackground = LocalAndroidColorScheme.current.surfaceEffect2,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
@@ -399,14 +426,22 @@ private object TileDefaults {
 
     @Composable
     @ReadOnlyComposable
-    fun getColorForState(uiState: TileUiState): TileColors {
+    fun getColorForState(uiState: TileUiState, iconOnly: Boolean): TileColors {
         return when (uiState.state) {
             STATE_ACTIVE -> {
-                activeIconTileColors()
+                if (!iconOnly) {
+                    activeDualTargetTileColors()
+                } else {
+                    activeIconTileColors()
+                }
             }
 
             STATE_INACTIVE -> {
-                inactiveTileColors()
+                if (uiState.handlesSecondaryClick && !iconOnly) {
+                    inactiveDualTargetTileColors()
+                } else {
+                    inactiveTileColors()
+                }
             }
 
             else -> unavailableTileColors()
