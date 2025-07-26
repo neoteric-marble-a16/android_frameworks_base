@@ -53,4 +53,8 @@
           <item>2047,46</item>
           <item>4095,0</item>
     </string-array>
+
+    <!-- Extra Quick Settings tiles -->
+    <string name="quick_settings_tiles_extra" translatable="false">
+    </string>
 </resources>
