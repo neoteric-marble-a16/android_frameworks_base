@@ -52,7 +52,7 @@ object ShadeColors {
 
     @JvmStatic
     private fun Resources.shadePanelFallback(): Int {
-        return ColorUtils.blendARGB(getColor(R.color.nt_scrim_behind_1), getColor(R.color.nt_scrim_behind_2), 0.3f)
+        return ColorUtils.blendARGB(getColor(R.color.nt_scrim_behind_1), getColor(R.color.nt_scrim_behind_2), 0.2f)
     }
 
     @JvmStatic
