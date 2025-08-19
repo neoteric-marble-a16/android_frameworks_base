@@ -44,23 +44,25 @@ object ShadeColors {
     private fun Resources.shadePanelStandard(): Int {
         val layerAbove = ColorUtils.setAlphaComponent(
             getColor(R.color.shade_panel_base, null),
-            (0.65f * 255).toInt()
+            (0.5f * 255).toInt()
         )
-        val layerBelow = ColorUtils.setAlphaComponent(Color.WHITE, (0.1f * 255).toInt())
+        val layerBelow = ColorUtils.setAlphaComponent(Color.WHITE, (0.08f * 255).toInt())
         return ColorUtils.compositeColors(layerAbove, layerBelow)
     }
 
     @JvmStatic
     private fun Resources.shadePanelFallback(): Int {
-        return ColorUtils.blendARGB(getColor(R.color.nt_scrim_behind_1), getColor(R.color.nt_scrim_behind_2), 0.2f)
+        return ColorUtils.blendARGB(getColor(R.color.nt_scrim_behind_1), getColor(R.color.nt_scrim_behind_2), 0.6f)
     }
 
     @JvmStatic
     private fun Resources.notificationScrimStandard(): Int {
-        return ColorUtils.setAlphaComponent(
+        val layerAbove = ColorUtils.setAlphaComponent(
             getColor(R.color.notification_scrim_base, null),
-            (0.65f * 255).toInt(),
+            (0.4f * 255).toInt()
         )
+        val layerBelow = ColorUtils.setAlphaComponent(Color.WHITE, (0.11f * 255).toInt())
+        return ColorUtils.compositeColors(layerAbove, layerBelow)
     }
 
     @JvmStatic
