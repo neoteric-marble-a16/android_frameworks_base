@@ -308,6 +308,8 @@ public class SecureSettings {
         Settings.Secure.DOZE_PICK_UP_GESTURE_AMBIENT,
         Settings.Secure.DOZE_TAP_GESTURE_AMBIENT,
         Settings.Secure.DOZE_ON_CHARGE,
-	Settings.Secure.TETHERING_ALLOW_VPN_UPSTREAMS
+	Settings.Secure.TETHERING_ALLOW_VPN_UPSTREAMS,
+        Settings.Secure.QS_SHOW_DATA_USAGE,
+        Settings.Secure.QS_DATA_USAGE_CYCLE_TYPE
     };
 }
