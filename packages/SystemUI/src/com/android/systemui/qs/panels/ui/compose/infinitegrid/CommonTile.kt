@@ -324,7 +324,7 @@ object CommonTileDefaults {
     val ToggleTargetSize = 56.dp
     val TileHeight = 74.dp
     val TileStartPadding = 8.dp
-    val TileEndPadding = 12.dp
+    val TileEndPadding = 16.dp
     val TileArrangementPadding = 12.dp
     val TileCornerRadius = 50.dp
     val TileLabelBlurWidth = 32.dp
