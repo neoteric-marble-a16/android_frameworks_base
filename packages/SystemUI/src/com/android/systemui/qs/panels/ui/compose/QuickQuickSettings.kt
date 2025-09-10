@@ -16,20 +16,13 @@
 
 package com.android.systemui.qs.panels.ui.compose
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
@@ -37,7 +30,6 @@ import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.qs.composefragment.ui.GridAnchor
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.Tile
-import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
 import com.android.systemui.qs.panels.ui.viewmodel.QuickQuickSettingsViewModel
 import com.android.systemui.qs.shared.ui.ElementKeys.toElementKey
 import com.android.systemui.res.R
@@ -55,28 +47,13 @@ fun ContentScope.QuickQuickSettings(
 
     val spans by remember(sizedTiles) { derivedStateOf { sizedTiles.fastMap { it.width } } }
 
-    val density = LocalDensity.current
-    var containerWidthPx by remember { mutableStateOf(0) }
-
     val columns = viewModel.columns
-    BoxWithConstraints(modifier = modifier
-        .fillMaxWidth()
-        .onSizeChanged { containerWidthPx = it.width }
-    ) {
+    Box(modifier = modifier) {
         GridAnchor()
-
-        val containerWidth = if (containerWidthPx > 0) {
-            density.run { containerWidthPx.toDp() }
-        } else {
-            maxWidth
-        }
-
-        val columnSpacing = ((containerWidth - (TileHeight * columns)) / (columns - 1))
-            .coerceAtLeast(dimensionResource(R.dimen.qs_tile_margin_horizontal))
     
         VerticalSpannedGrid(
             columns = columns,
-            columnSpacing = columnSpacing,
+            columnSpacing = dimensionResource(R.dimen.qs_tile_margin_horizontal),
             rowSpacing = dimensionResource(R.dimen.qs_tile_margin_vertical),
             spans = spans,
             modifier = Modifier.sysuiResTag("qqs_tile_layout"),

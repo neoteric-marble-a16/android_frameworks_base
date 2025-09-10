@@ -30,6 +30,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -121,44 +122,46 @@ fun LargeTileContent(
         val animatedBackgroundColor by
             animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
         val focusBorderColor = MaterialTheme.colorScheme.secondary
-        Box(
-            modifier =
-                Modifier
-                    .size(
-                        if (toggleClick != null) CommonTileDefaults.ToggleTargetSize 
-                        else CommonTileDefaults.IconSize
-                    )
-                    .clip(iconShape)
-                    .verticalSquish(squishiness)
-                    .thenIf(toggleClick != null) {
-                        Modifier
-                            .drawBehind { drawRect(animatedBackgroundColor) }
-                            .borderOnFocus(color = focusBorderColor, iconShape.topEnd)
-                            .combinedClickable(
-                                onClick = toggleClick!!,
-                                onLongClick = onLongClick,
-                                onLongClickLabel = longPressLabel,
-                            )
-                            .thenIf(accessibilityUiState != null) {
-                                Modifier.semantics {
-                                        accessibilityUiState as AccessibilityUiState
-                                        contentDescription = accessibilityUiState.contentDescription
-                                        stateDescription = accessibilityUiState.stateDescription
-                                        accessibilityUiState.toggleableState?.let {
-                                            toggleableState = it
+        BoxWithConstraints {
+            Box(
+                modifier =
+                    Modifier
+                        .size(
+                            if (toggleClick != null) maxHeight - CommonTileDefaults.TileArrangementPadding
+                            else CommonTileDefaults.IconSize
+                        )
+                        .clip(iconShape)
+                        .verticalSquish(squishiness)
+                        .thenIf(toggleClick != null) {
+                            Modifier
+                                .drawBehind { drawRect(animatedBackgroundColor) }
+                                .borderOnFocus(color = focusBorderColor, iconShape.topEnd)
+                                .combinedClickable(
+                                    onClick = toggleClick!!,
+                                    onLongClick = onLongClick,
+                                    onLongClickLabel = longPressLabel,
+                                )
+                                .thenIf(accessibilityUiState != null) {
+                                    Modifier.semantics {
+                                            accessibilityUiState as AccessibilityUiState
+                                            contentDescription = accessibilityUiState.contentDescription
+                                            stateDescription = accessibilityUiState.stateDescription
+                                            accessibilityUiState.toggleableState?.let {
+                                                toggleableState = it
+                                            }
+                                            role = Role.Switch
                                         }
-                                        role = Role.Switch
-                                    }
-                                    .sysuiResTag(TEST_TAG_TOGGLE)
-                            }
-                    }
-        ) {
-            SmallTileContent(
-                iconProvider = iconProvider,
-                color = colors.icon,
-                size = { CommonTileDefaults.LargeTileIconSize },
-                modifier = Modifier.align(Alignment.Center),
-            )
+                                        .sysuiResTag(TEST_TAG_TOGGLE)
+                                }
+                        }
+            ) {
+                SmallTileContent(
+                    iconProvider = iconProvider,
+                    color = colors.icon,
+                    size = { CommonTileDefaults.LargeTileIconSize },
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
         }
 
         // Labels
@@ -325,8 +328,6 @@ object CommonTileDefaults {
     val LargeTileIconSize = 28.dp
     val SideIconWidth = 32.dp
     val SideIconHeight = 20.dp
-    val ToggleTargetSize = 56.dp
-    val TileHeight = 74.dp
     val TileStartPadding = 8.dp
     val TileEndPadding = 16.dp
     val TileArrangementPadding = 12.dp

@@ -16,20 +16,12 @@
 
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
@@ -42,7 +34,6 @@ import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.PaginatableGridLayout
 import com.android.systemui.qs.panels.ui.compose.TileListener
 import com.android.systemui.qs.panels.ui.compose.rememberEditListState
-import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
 import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.IconTilesViewModel
@@ -95,42 +86,25 @@ constructor(
         val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
         val spans by remember(sizedTiles) { derivedStateOf { sizedTiles.fastMap { it.width } } }
 
-        val density = LocalDensity.current
-        var containerWidthPx by remember { mutableStateOf(0) }
 
-        BoxWithConstraints(
-            modifier = modifier
-                .fillMaxWidth()
-                .onSizeChanged { containerWidthPx = it.width }
-        ) {
-            val containerWidth = if (containerWidthPx > 0) {
-                density.run { containerWidthPx.toDp() }
-            } else {
-                maxWidth
-            }
-
-            val columnSpacing = ((containerWidth - (TileHeight * columns)) / (columns - 1))
-                .coerceAtLeast(dimensionResource(R.dimen.qs_tile_margin_horizontal))
-
-            VerticalSpannedGrid(
-                columns = columns,
-                columnSpacing = columnSpacing,
-                rowSpacing = dimensionResource(R.dimen.qs_tile_margin_vertical),
-                spans = spans,
-                keys = { sizedTiles[it].tile.spec },
-            ) { spanIndex, column, isFirstInColumn, isLastInColumn ->
-                val it = sizedTiles[spanIndex]
-                Element(it.tile.spec.toElementKey(spanIndex), Modifier) {
-                    Tile(
-                        tile = it.tile,
-                        iconOnly = iconTilesViewModel.isIconTile(it.tile.spec),
-                        squishiness = { squishiness },
-                        tileHapticsViewModelFactoryProvider = tileHapticsViewModelFactoryProvider,
-                        detailsViewModel = detailsViewModel,
-                        isVisible = listening,
-                    )
-                } 
-            }
+        VerticalSpannedGrid(
+            columns = columns,
+            columnSpacing = dimensionResource(R.dimen.qs_tile_margin_horizontal),
+            rowSpacing = dimensionResource(R.dimen.qs_tile_margin_vertical),
+            spans = spans,
+            keys = { sizedTiles[it].tile.spec },
+        ) { spanIndex, column, isFirstInColumn, isLastInColumn ->
+            val it = sizedTiles[spanIndex]
+            Element(it.tile.spec.toElementKey(spanIndex), Modifier) {
+                Tile(
+                    tile = it.tile,
+                    iconOnly = iconTilesViewModel.isIconTile(it.tile.spec),
+                    squishiness = { squishiness },
+                    tileHapticsViewModelFactoryProvider = tileHapticsViewModelFactoryProvider,
+                    detailsViewModel = detailsViewModel,
+                    isVisible = listening,
+                )
+            } 
         }
 
         TileListener(tiles, listening)
