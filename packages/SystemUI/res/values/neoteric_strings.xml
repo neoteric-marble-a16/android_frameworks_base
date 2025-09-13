@@ -202,4 +202,9 @@
     <string name="usage_data_weekly">used this week</string>
     <string name="usage_data_default_suffix">Data</string>
     <string name="usage_wifi_default_suffix">Wi-Fi</string>
+
+    <!-- Flashlight Strength -->
+    <string name="flashlight_strength_title">Flashlight Strength</string>
+    <string name="flashlight_strength_turn_off">Turn off</string>
+    <string name="flashlight_strength_turn_on">Turn on</string>
 </resources>
