@@ -193,17 +193,21 @@ fun Tile(
                     .takeIf { uiState.handlesLongClick }
             TileContainer(
                 onClick = {
-                    var hasDetails = false
-                    if (QsDetailedView.isEnabled) {
-                        hasDetails = detailsViewModel?.onTileClicked(tile.spec) == true
-                    }
-                    if (!hasDetails) {
-                        // For those tile's who doesn't have a detailed view, process with their
-                        // `onClick` behavior.
-                        tile.onClick(expandable)
-                        hapticsViewModel?.setTileInteractionState(
-                            TileHapticsViewModel.TileInteractionState.CLICKED
-                        )
+                    if (iconOnly && uiState.handlesSecondaryClick) {
+                        tile.onSecondaryClick()
+                    } else {
+                        var hasDetails = false
+                        if (QsDetailedView.isEnabled) {
+                            hasDetails = detailsViewModel?.onTileClicked(tile.spec) == true
+                        }
+                        if (!hasDetails) {
+                            // For those tile's who doesn't have a detailed view, process with their
+                            // `onClick` behavior.
+                            tile.onClick(expandable)
+                            hapticsViewModel?.setTileInteractionState(
+                                TileHapticsViewModel.TileInteractionState.CLICKED
+                            )
+                        }
                     }
                 },
                 onLongClick = longClick,
