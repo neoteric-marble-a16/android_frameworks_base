@@ -210,4 +210,7 @@
 
     <!-- Data disabled icon -->
     <string name="data_disabled_icon_title">Data disabled icon</string>
+
+    <!-- Bluetooth battery status -->
+    <string name="status_bar_bluetooth_battery_title">Bluetooth battery status</string>
 </resources>
