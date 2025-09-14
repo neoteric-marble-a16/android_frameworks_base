@@ -213,4 +213,9 @@
 
     <!-- Bluetooth battery status -->
     <string name="status_bar_bluetooth_battery_title">Bluetooth battery status</string>
+
+    <!-- Privacy Indicator -->
+    <string name="mic_camera_privacy_indicator_title">Mic and camera privacy indicator</string>
+    <string name="location_privacy_indicator_title">Location privacy indicator</string>
+    <string name="projection_privacy_indicator_title">Media projection privacy indicator</string>
 </resources>
