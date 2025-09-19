@@ -130,10 +130,10 @@ fun LargeTileContent(
                             if (toggleClick != null) maxHeight - CommonTileDefaults.TileArrangementPadding
                             else CommonTileDefaults.IconSize
                         )
-                        .clip(iconShape)
-                        .verticalSquish(squishiness)
                         .thenIf(toggleClick != null) {
                             Modifier
+                                .clip(iconShape)
+                                .verticalSquish(squishiness)
                                 .drawBehind { drawRect(animatedBackgroundColor) }
                                 .borderOnFocus(color = focusBorderColor, iconShape.topEnd)
                                 .combinedClickable(
@@ -158,7 +158,6 @@ fun LargeTileContent(
                 SmallTileContent(
                     iconProvider = iconProvider,
                     color = colors.icon,
-                    size = { CommonTileDefaults.LargeTileIconSize },
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
@@ -324,8 +323,7 @@ private fun TileLabel(
 }
 
 object CommonTileDefaults {
-    val IconSize = 32.dp
-    val LargeTileIconSize = 28.dp
+    val IconSize = 30.dp
     val SideIconWidth = 32.dp
     val SideIconHeight = 20.dp
     val TileStartPadding = 8.dp
