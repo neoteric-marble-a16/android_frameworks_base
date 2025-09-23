@@ -5,28 +5,24 @@
 
 package com.android.systemui.qs.tiles;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemProperties;
 import android.provider.Settings;
 import android.service.quicksettings.Tile;
-import android.sysprop.TelephonyProperties;
 import android.telephony.PhoneStateListener;
+import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
-import com.android.internal.telephony.IccCardConstants;
-import com.android.internal.telephony.TelephonyIntents;
 
 import com.android.systemui.animation.Expandable;
 import com.android.systemui.dagger.qualifiers.Background;
@@ -46,52 +42,28 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class PreferredNetworkTile extends QSTileImpl<State> {
-
     public static final String TILE_SPEC = "preferred_network";
 
     private static final String TAG = "PreferredNetworkTile";
+    private static final boolean DEBUG = false;
 
     private static final int TYPE_UNKNOWN = 0;
-    private static final int TYPE_LTE = 1;
-    private static final int TYPE_NR = 2;
-
-    private final Icon mIcon = ResourceIcon.get(R.drawable.ic_preferred_network);
+    private static final int TYPE_2G = 1;
+    private static final int TYPE_3G = 2;
+    private static final int TYPE_4G = 3;
+    private static final int TYPE_5G = 4;
 
     private final TelephonyManager mTelephonyManager;
-
-    private boolean mCanSwitch = true;
-    private boolean mRegistered = false;
-
+    private final SubscriptionManager mSubscriptionManager;
     private int mSimCount = 0;
+    private boolean mCanSwitch = true;
 
-    private final BroadcastReceiver mDefaultSubChangeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "Default subcription changed");
-            refreshState();
-        }
-    };
-
-    private final BroadcastReceiver mSimReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "Sim card changed");
-            refreshState();
-        }
-    };
-
-    private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
-        @Override
-        public void onCallStateChanged(int state, String arg1) {
-            mCanSwitch = mTelephonyManager.getCallState() == 0;
-            refreshState();
-        }
-    };
+    private TelephonyDisplayInfo mTelephonyDisplayInfo;
 
     @Inject
     public PreferredNetworkTile(
             QSHost host,
-	    QsEventLogger uiEventLogger,
+            QsEventLogger uiEventLogger,
             @Background Looper backgroundLooper,
             @Main Handler mainHandler,
             FalsingManager falsingManager,
@@ -102,18 +74,14 @@ public class PreferredNetworkTile extends QSTileImpl<State> {
     ) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
                 statusBarStateController, activityStarter, qsLogger);
-        mTelephonyManager = TelephonyManager.from(host.getContext());
+        mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
+        mSubscriptionManager = mContext.getSystemService(SubscriptionManager.class);
+        updateSimCount();
     }
 
     @Override
     public boolean isAvailable() {
-        List<Integer> list = TelephonyProperties.default_network();
-        for (int type : list) {
-            if (type > 22) {
-                return true;
-            }
-        }
-        return false;
+        return mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE;
     }
 
     @Override
@@ -122,67 +90,78 @@ public class PreferredNetworkTile extends QSTileImpl<State> {
     }
 
     @Override
-    protected void handleClick(@Nullable Expandable expandable) {
-        if (!mCanSwitch) {
-            Log.i(TAG, "Interrupted preferred network switching due to call state");
-            return;
-        }
-        if (mSimCount == 0) {
-            return;
-        }
-        final int subId = SubscriptionManager.getDefaultDataSubscriptionId();
-        final TelephonyManager tm = mTelephonyManager.createForSubscriptionId(subId);
-        final int currentType = getCurrentType(tm);
-        if (currentType == TYPE_UNKNOWN) {
-            return;
-        }
-        long newType = tm.getAllowedNetworkTypesForReason(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-        if (currentType == TYPE_LTE) {
-            newType |= TelephonyManager.NETWORK_TYPE_BITMASK_NR;
-        } else {
-            newType &= ~TelephonyManager.NETWORK_TYPE_BITMASK_NR;
-        }
-        tm.setAllowedNetworkTypesForReason(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER, newType);
+    public void handleClick(@Nullable Expandable expandable) {
+        if (!mCanSwitch || mSimCount == 0) return;
+
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
+
+        TelephonyManager tm = mTelephonyManager.createForSubscriptionId(subId);
+        int current = getCurrentType(tm);
+        if (current == TYPE_UNKNOWN) return;
+
+        int next = getNextType(tm, current);
+        long mask = getMaskForType(next);
+
+        tm.setAllowedNetworkTypesForReason(
+            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER, mask);
+        if (DEBUG) Log.d(TAG, "Applied type=" + next + " mask=" + mask);
+
         refreshState();
     }
 
     @Override
     public Intent getLongClickIntent() {
-        if (mSimCount == 0) {
-            return null;
-        }
+        if (mSimCount == 0) return null;
+
         Intent intent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
         int dataSub = SubscriptionManager.getDefaultDataSubscriptionId();
         if (dataSub != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-            intent.putExtra(Settings.EXTRA_SUB_ID,
-                    SubscriptionManager.getDefaultDataSubscriptionId());
+            intent.putExtra(Settings.EXTRA_SUB_ID, dataSub);
         }
+
         return intent;
     }
 
     @Override
     protected void handleUpdateState(State state, Object arg) {
-        state.icon = mIcon;
-        state.label = mContext.getResources().getString(R.string.quick_settings_preferred_network_label);
-
         updateSimCount();
+        state.icon = ResourceIcon.get(R.drawable.ic_preferred_network);
+        state.label = mContext.getString(R.string.quick_settings_preferred_network_label);
+
         if (mSimCount == 0) {
             state.state = Tile.STATE_UNAVAILABLE;
-            state.secondaryLabel =
-                    mContext.getResources().getString(R.string.quick_settings_preferred_network_unsupported);
+            state.secondaryLabel = mContext.getString(
+                    R.string.quick_settings_preferred_network_unsupported);
             return;
         }
 
-        final int subId = SubscriptionManager.getDefaultDataSubscriptionId();
-        final TelephonyManager tm = mTelephonyManager.createForSubscriptionId(subId);
-        final int currentType = getCurrentType(tm);
-        state.state = currentType == TYPE_UNKNOWN ?
-                Tile.STATE_UNAVAILABLE : Tile.STATE_ACTIVE;
-        state.secondaryLabel = currentType == TYPE_UNKNOWN ?
-                mContext.getResources().getString(R.string.quick_settings_preferred_network_unsupported)
-                : currentType == TYPE_NR ?
-                mContext.getResources().getString(R.string.quick_settings_preferred_network_nr)
-                : mContext.getResources().getString(R.string.quick_settings_preferred_network_lte);
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        TelephonyManager tm = mTelephonyManager.createForSubscriptionId(subId);
+        
+        int current = getCurrentType(tm);
+        state.state = current == TYPE_UNKNOWN ? Tile.STATE_UNAVAILABLE : Tile.STATE_ACTIVE;
+        switch (current) {
+            case TYPE_2G: state.secondaryLabel = "2G"; break;
+            case TYPE_3G: state.secondaryLabel = "3G"; break;
+            case TYPE_4G:
+                if (mTelephonyDisplayInfo != null) {
+                    switch (mTelephonyDisplayInfo.getOverrideNetworkType()) {
+                        case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA:
+                        case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED:
+                            state.secondaryLabel = "5G";
+                            break;
+                        default: state.secondaryLabel = "4G";
+                    }
+                } else {
+                   state.secondaryLabel = "4G";
+                }
+                break;
+            case TYPE_5G: state.secondaryLabel = "5G"; break;
+            default:
+                state.secondaryLabel = mContext.getString(
+                        R.string.quick_settings_preferred_network_unsupported);
+        }
     }
 
     @Override
@@ -198,54 +177,77 @@ public class PreferredNetworkTile extends QSTileImpl<State> {
     @Override
     public void handleSetListening(boolean listening) {
         if (listening) {
-            if (!mRegistered) {
-                IntentFilter filter = new IntentFilter();
-                filter.addAction(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED);
-                mContext.registerReceiver(mDefaultSubChangeReceiver, filter);
-                filter = new IntentFilter();
-                filter.addAction(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
-                mContext.registerReceiver(mSimReceiver, filter);
-                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
-                mRegistered = true;
-            }
-            refreshState();
-        } else if (mRegistered) {
-            mContext.unregisterReceiver(mDefaultSubChangeReceiver);
-            mContext.unregisterReceiver(mSimReceiver);
+            mTelephonyManager.listen(mPhoneStateListener,
+                    PhoneStateListener.LISTEN_CALL_STATE | PhoneStateListener.LISTEN_DISPLAY_INFO_CHANGED);
+        } else {
             mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-            mRegistered = false;
+        }
+    }
+
+    private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
+        @Override
+        public void onCallStateChanged(int state, String phoneNumber) {
+            mCanSwitch = (state == TelephonyManager.CALL_STATE_IDLE);
+            refreshState();
+        }
+
+        @Override
+        public void onDisplayInfoChanged(@NonNull TelephonyDisplayInfo displayInfo) {
+            mTelephonyDisplayInfo = displayInfo;
+            refreshState();
+        }
+    };
+
+    private long getMaskForType(int type) {
+        switch (type) {
+            case TYPE_2G: return TelephonyManager.NETWORK_CLASS_BITMASK_2G;
+            case TYPE_3G: return TelephonyManager.NETWORK_CLASS_BITMASK_3G;
+            case TYPE_4G: return TelephonyManager.NETWORK_CLASS_BITMASK_4G;
+            case TYPE_5G: return TelephonyManager.NETWORK_CLASS_BITMASK_5G;
+            default: return 0;
         }
     }
 
     private int getCurrentType(TelephonyManager tm) {
-        final long allowedNetworkTypes =
-                tm.getAllowedNetworkTypesForReason(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-        if ((allowedNetworkTypes & TelephonyManager.NETWORK_TYPE_BITMASK_NR) != 0) {
-            return TYPE_NR;
+        long allowed = tm.getAllowedNetworkTypesForReason(
+                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+
+        for (int type : new int[]{TYPE_5G, TYPE_4G, TYPE_3G, TYPE_2G}) {
+            if ((allowed & getMaskForType(type)) != 0) {
+                return type;
+            }
         }
-        if ((allowedNetworkTypes & TelephonyManager.NETWORK_TYPE_BITMASK_LTE) != 0) {
-            return TYPE_LTE;
-        }
+
         return TYPE_UNKNOWN;
     }
 
-    private void updateSimCount() {
-        String simState = SystemProperties.get("gsm.sim.state");
-        Log.d(TAG, "updateSimCount, simState: " + simState);
-        mSimCount = 0;
-        try {
-            String[] sims = TextUtils.split(simState, ",");
-            for (String sim : sims) {
-                if (!sim.isEmpty()
-                        && !sim.equalsIgnoreCase(IccCardConstants.INTENT_VALUE_ICC_ABSENT)
-                        && !sim.equalsIgnoreCase(IccCardConstants.INTENT_VALUE_ICC_NOT_READY)) {
-                    mSimCount++;
-                }
+    private int getNextType(TelephonyManager tm, int currentType) {
+        int[] order = {TYPE_2G, TYPE_3G, TYPE_4G, TYPE_5G};
+        int idx = 0;
+        long supported = tm.getAllowedNetworkTypesForReason(
+                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
+
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == currentType) {
+                idx = i;
+                break;
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error to parse sim state");
         }
-        Log.d(TAG, "updateSimCount, mSimCount: " + mSimCount);
+
+        for (int i = 1; i <= order.length; i++) {
+            int nextType = order[(idx + i) % order.length];
+            long mask = getMaskForType(nextType);
+            if ((supported & mask) != 0) {
+                return nextType;
+            }
+        }
+        
+        return currentType;
     }
 
+    private void updateSimCount() {
+        List<SubscriptionInfo> list = mSubscriptionManager.getActiveSubscriptionInfoList();
+        mSimCount = (list != null) ? list.size() : 0;
+        if (DEBUG) Log.d(TAG, "updateSimCount = " + mSimCount);
+    }
 }
