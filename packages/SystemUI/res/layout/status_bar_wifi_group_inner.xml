@@ -26,6 +26,12 @@
         android:gravity="center_vertical"
         android:layout_marginStart="2.5sp"
     >
+        <com.android.systemui.statusbar.NetworkTraffic
+            android:id="@+id/network_traffic"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="3dp" />
+
         <FrameLayout
                 android:id="@+id/inout_container"
                 android:layout_height="@dimen/status_bar_wifi_inout_container_size"

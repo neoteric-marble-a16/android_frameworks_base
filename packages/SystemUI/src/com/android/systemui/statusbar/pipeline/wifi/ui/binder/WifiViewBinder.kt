@@ -27,6 +27,7 @@ import com.android.systemui.Flags.statusBarStaticInoutIndicators
 import com.android.systemui.common.ui.binder.IconViewBinder
 import com.android.systemui.lifecycle.repeatWhenAttached
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.NetworkTraffic
 import com.android.systemui.statusbar.StatusBarIconView
 import com.android.systemui.statusbar.StatusBarIconView.STATE_HIDDEN
 import com.android.systemui.statusbar.pipeline.shared.ui.binder.ModernStatusBarViewBinding
@@ -67,6 +68,7 @@ object WifiViewBinder {
         val airplaneSpacer = view.requireViewById<View>(R.id.wifi_airplane_spacer)
         val signalSpacer = view.requireViewById<View>(R.id.wifi_signal_spacer)
         val wifiStandardView = view.requireViewById<ImageView>(R.id.wifi_standard)
+        val networkTraffic = view.requireViewById<NetworkTraffic>(R.id.network_traffic)
 
         view.isVisible = true
         iconView.isVisible = true
@@ -117,6 +119,7 @@ object WifiViewBinder {
                         activityInView.imageTintList = tintList
                         activityOutView.imageTintList = tintList
                         wifiStandardView.imageTintList = tintList
+                        networkTraffic.setTint(tint)
                         dotView.setDecorColor(tint)
                     }
                 }
