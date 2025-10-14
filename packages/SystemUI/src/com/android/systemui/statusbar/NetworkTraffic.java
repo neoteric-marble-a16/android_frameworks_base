@@ -138,6 +138,10 @@ public class NetworkTraffic extends TextView implements TunerService.Tunable {
     public NetworkTraffic(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mContext = context;
+        setLines(2);
+        String txtFont = getResources().getString(com.android.internal.R.string.config_bodyFontFamily);
+        setTypeface(Typeface.create(txtFont, Typeface.BOLD));
+        setLineSpacing(0.80f, 0.80f);
         mConnectivityManager =
                 (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         mTrafficHandler = new Handler(mContext.getMainLooper()) {
@@ -240,6 +244,7 @@ public class NetworkTraffic extends TextView implements TunerService.Tunable {
                     // Update view if there's anything new to show
                     if (!TextUtils.equals(output, getText())) {
                         setText(output);
+                        setTrafficDrawable();
                     }
                 }
 
@@ -431,12 +436,6 @@ public class NetworkTraffic extends TextView implements TunerService.Tunable {
             case NETWORK_TRAFFIC_ENABLED:
                 mEnabled =
                         TunerService.parseIntegerSwitch(newValue, false);
-                if (mEnabled) {
-                    setLines(2);
-                    String txtFont = getResources().getString(com.android.internal.R.string.config_bodyFontFamily);
-                    setTypeface(Typeface.create(txtFont, Typeface.BOLD));
-                    setLineSpacing(0.80f, 0.80f);
-                }
                 updateViews();
                 break;
             case NETWORK_TRAFFIC_MODE:
@@ -519,7 +518,9 @@ public class NetworkTraffic extends TextView implements TunerService.Tunable {
         }
         if (mDrawable != drawable) {
             mDrawable = drawable;
-            setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, mDrawable, null);
+            if ((getVisibility() ==  View.VISIBLE) && !TextUtils.isEmpty(getText())) {
+                setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, mDrawable, null);
+            }
         }
     }
 
