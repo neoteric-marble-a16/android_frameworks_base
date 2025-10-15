@@ -710,8 +710,8 @@
 
     <dimen name="qs_corner_radius">28dp</dimen>
     <dimen name="qs_tile_height">80dp</dimen>
-    <dimen name="qs_tile_margin_horizontal">17dp</dimen>
-    <dimen name="qs_tile_margin_vertical">17dp</dimen>
+    <dimen name="qs_tile_margin_horizontal">18dp</dimen>
+    <dimen name="qs_tile_margin_vertical">16dp</dimen>
     <dimen name="qs_tile_margin_top_bottom">4dp</dimen>
     <dimen name="qs_brightness_margin_top">8dp</dimen>
     <dimen name="qs_brightness_margin_bottom">16dp</dimen>
