@@ -31,7 +31,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_marginEnd="2.5sp"
-            android:paddingEnd="2dp" />
+            android:paddingEnd="2dp"
+            android:visibility="gone" />
 
         <FrameLayout
                 android:id="@+id/inout_container"
