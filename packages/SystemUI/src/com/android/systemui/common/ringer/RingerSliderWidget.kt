@@ -95,9 +95,9 @@ fun RingerSliderWidget(
                     val sectionWidth = size.width / numModes.toFloat()
                     val snappedIndex = (tapOffset.x / sectionWidth).toInt().coerceIn(0, numModes - 1)
                     dragOffset = snappedIndex.toFloat()
-                    val selectedMode = availableModes[snappedIndex].mode
-                    triggerHapticForMode(selectedMode)
-                    interactor.setRingerMode(selectedMode)
+                    val newMode = availableModes[snappedIndex].mode
+                    triggerHapticForMode(newMode)
+                    interactor.setRingerMode(newMode)
                 }
             }
             .pointerInput(Unit) {
@@ -105,9 +105,9 @@ fun RingerSliderWidget(
                     onDragStart = { isDragging = true },
                     onDragEnd = {
                         isDragging = false
-                        val finalMode = interactor.snapMode(dragOffset)
-                        triggerHapticForMode(finalMode)
-                        interactor.setRingerMode(finalMode)
+                        val snappedMode = interactor.snapMode(dragOffset)
+                        triggerHapticForMode(snappedMode)
+                        interactor.setRingerMode(snappedMode)
                     },
                     onDragCancel = { 
                         isDragging = false
