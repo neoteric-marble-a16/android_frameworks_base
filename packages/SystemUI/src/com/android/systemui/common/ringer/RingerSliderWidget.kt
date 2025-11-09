@@ -15,6 +15,8 @@
  */
 package com.android.systemui.common.ringer
 
+import android.content.Context
+import android.media.AudioManager
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -29,7 +31,9 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.android.internal.util.android.VibrationUtils
 import kotlin.math.roundToInt
 
 @Composable
@@ -41,6 +45,7 @@ fun RingerSliderWidget(
     isDozing: Boolean = false,
     border: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val availableModes = interactor.getAvailableRingerModes()
     val numModes = interactor.getNumberOfModes()
     val maxOffset = interactor.getMaxOffset()
@@ -51,6 +56,7 @@ fun RingerSliderWidget(
 
     var dragOffset by remember { mutableStateOf(targetPosition) }
     var isDragging by remember { mutableStateOf(false) }
+    var lastTriggeredMode by remember { mutableStateOf<Int?>(null) }
 
     val animatedPosition by animateFloatAsState(
         targetValue = if (isDragging) dragOffset else targetPosition,
@@ -60,6 +66,20 @@ fun RingerSliderWidget(
 
     LaunchedEffect(targetPosition) {
         if (!isDragging) dragOffset = targetPosition
+    }
+
+    fun triggerHapticForMode(mode: Int) {
+        if (lastTriggeredMode == mode) return
+        lastTriggeredMode = mode
+        
+        val intensity = when (mode) {
+            AudioManager.RINGER_MODE_SILENT -> 0
+            AudioManager.RINGER_MODE_NORMAL -> 1
+            AudioManager.RINGER_MODE_VIBRATE -> 5
+            else -> 0
+        }
+        
+        VibrationUtils.triggerVibration(context, intensity)
     }
 
     Box(
@@ -75,7 +95,9 @@ fun RingerSliderWidget(
                     val sectionWidth = size.width / numModes.toFloat()
                     val snappedIndex = (tapOffset.x / sectionWidth).toInt().coerceIn(0, numModes - 1)
                     dragOffset = snappedIndex.toFloat()
-                    interactor.setRingerMode(availableModes[snappedIndex].mode)
+                    val selectedMode = availableModes[snappedIndex].mode
+                    triggerHapticForMode(selectedMode)
+                    interactor.setRingerMode(selectedMode)
                 }
             }
             .pointerInput(Unit) {
@@ -83,15 +105,30 @@ fun RingerSliderWidget(
                     onDragStart = { isDragging = true },
                     onDragEnd = {
                         isDragging = false
-                        interactor.setRingerMode(interactor.snapMode(dragOffset))
+                        val finalMode = interactor.snapMode(dragOffset)
+                        triggerHapticForMode(finalMode)
+                        interactor.setRingerMode(finalMode)
                     },
-                    onDragCancel = { isDragging = false }
+                    onDragCancel = { 
+                        isDragging = false
+                        lastTriggeredMode = null
+                    }
                 ) { change, dragAmount ->
                     change.consume()
                     val trackWidth = size.width - dimens.thumbSize.toPx()
                     val pixelPerUnit = trackWidth / maxOffset
-                    dragOffset = (dragOffset + (dragAmount.x / pixelPerUnit))
+                    val newOffset = (dragOffset + (dragAmount.x / pixelPerUnit))
                         .coerceIn(0f, maxOffset)
+                    
+                    val oldModeIndex = dragOffset.roundToInt().coerceIn(0, numModes - 1)
+                    val newModeIndex = newOffset.roundToInt().coerceIn(0, numModes - 1)
+                    
+                    if (oldModeIndex != newModeIndex) {
+                        val crossedMode = availableModes[newModeIndex].mode
+                        triggerHapticForMode(crossedMode)
+                    }
+                    
+                    dragOffset = newOffset
                 }
             },
         contentAlignment = Alignment.CenterStart
