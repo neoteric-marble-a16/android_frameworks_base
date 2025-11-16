@@ -54,18 +54,28 @@ fun RingerSliderWidget(
         initial = interactor.getTargetPosition(interactor.getCurrentMode())
     )
 
-    var dragOffset by remember { mutableStateOf(targetPosition) }
+    var dragOffset by remember { mutableFloatStateOf(targetPosition) }
     var isDragging by remember { mutableStateOf(false) }
     var lastTriggeredMode by remember { mutableStateOf<Int?>(null) }
 
-    val animatedPosition by animateFloatAsState(
-        targetValue = if (isDragging) dragOffset else targetPosition,
-        animationSpec = tween(durationMillis = 250, easing = LinearOutSlowInEasing),
-        label = "ringer_position"
-    )
+    val animatedPosition = remember { Animatable(targetPosition) }
 
-    LaunchedEffect(targetPosition) {
-        if (!isDragging) dragOffset = targetPosition
+    LaunchedEffect(targetPosition, isDragging) {
+        if (!isDragging) {
+            dragOffset = targetPosition
+            if (animatedPosition.value != targetPosition) {
+                animatedPosition.animateTo(
+                    targetValue = targetPosition,
+                    animationSpec = tween(durationMillis = 250, easing = LinearOutSlowInEasing)
+                )
+            }
+        }
+    }
+
+    LaunchedEffect(dragOffset, isDragging) {
+        if (isDragging) {
+            animatedPosition.snapTo(dragOffset)
+        }
     }
 
     fun triggerHapticForMode(mode: Int) {
@@ -90,28 +100,30 @@ fun RingerSliderWidget(
             .then(if (isDozing)
                 Modifier.border(theme.dozeStroke, Color.White, CircleShape)
             else border)
-            .pointerInput(Unit) {
+            .pointerInput(availableModes, numModes) {
                 detectTapGestures { tapOffset ->
                     val sectionWidth = size.width / numModes.toFloat()
-                    val snappedIndex = (tapOffset.x / sectionWidth).toInt().coerceIn(0, numModes - 1)
-                    dragOffset = snappedIndex.toFloat()
-                    val newMode = availableModes[snappedIndex].mode
+                    val tappedIndex = (tapOffset.x / sectionWidth).toInt().coerceIn(0, numModes - 1)
+                    dragOffset = tappedIndex.toFloat()
+                    val newMode = availableModes[tappedIndex].mode
                     triggerHapticForMode(newMode)
                     interactor.setRingerMode(newMode)
                 }
             }
-            .pointerInput(Unit) {
+            .pointerInput(availableModes, maxOffset) {
                 detectDragGestures(
                     onDragStart = { isDragging = true },
                     onDragEnd = {
+                        val finalMode = interactor.snapMode(dragOffset)
+                        triggerHapticForMode(finalMode)
+                        interactor.setRingerMode(finalMode)
+                        val snappedPosition = interactor.getTargetPosition(finalMode)
+                        dragOffset = snappedPosition
                         isDragging = false
-                        val snappedMode = interactor.snapMode(dragOffset)
-                        triggerHapticForMode(snappedMode)
-                        interactor.setRingerMode(snappedMode)
                     },
                     onDragCancel = { 
                         isDragging = false
-                        lastTriggeredMode = null
+                        dragOffset = targetPosition
                     }
                 ) { change, dragAmount ->
                     change.consume()
@@ -138,26 +150,28 @@ fun RingerSliderWidget(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val currentIndex = animatedPosition.roundToInt()
+            val currentIndex = animatedPosition.value.roundToInt()
             availableModes.forEachIndexed { index, _ ->
-                val dotAlpha by animateFloatAsState(
-                    targetValue = if (currentIndex == index) 0f else 0.4f,
-                    animationSpec = tween(durationMillis = 200),
-                    label = "dot_alpha"
-                )
-                Box(
-                    modifier = Modifier
-                        .size(dimens.dotSize)
-                        .graphicsLayer { alpha = dotAlpha }
-                        .background(if (isDozing) Color.White else theme.neutralIcon, CircleShape)
-                )
+                key(index) {
+                    val dotAlpha by animateFloatAsState(
+                        targetValue = if (currentIndex == index) 0f else 0.4f,
+                        animationSpec = tween(durationMillis = 200),
+                        label = "dot_alpha_$index"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(dimens.dotSize)
+                            .graphicsLayer { alpha = dotAlpha }
+                            .background(if (isDozing) Color.White else theme.neutralIcon, CircleShape)
+                    )
+                }
             }
         }
 
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val totalWidth = maxWidth
             val step = if (numModes > 1) (totalWidth - dimens.thumbSize) / (numModes - 1) else 0.dp
-            val thumbOffset = step * animatedPosition
+            val thumbOffset = step * animatedPosition.value
 
             Box(
                 modifier = Modifier
@@ -171,7 +185,7 @@ fun RingerSliderWidget(
                         Modifier.border(2.dp, Color.Transparent, CircleShape)),
                 contentAlignment = Alignment.Center
             ) {
-                val currentIndex = animatedPosition.roundToInt().coerceIn(0, numModes - 1)
+                val currentIndex = animatedPosition.value.roundToInt().coerceIn(0, numModes - 1)
                 Icon(
                     imageVector = availableModes[currentIndex].icon,
                     contentDescription = null,
