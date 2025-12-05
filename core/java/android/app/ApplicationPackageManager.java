@@ -272,6 +272,34 @@ public class ApplicationPackageManager extends PackageManager {
     @Override
     public PackageInfo getPackageInfoAsUser(String packageName, PackageInfoFlags flags, int userId)
             throws NameNotFoundException {
+        
+        // --- BEGIN HIDE PATCH (Single Package Lookup) ---
+        // This blocks "com.android.vending" (Play Store) from seeing YouTube exists.
+        try {
+            String revProp = android.os.SystemProperties.get("persist.sys.revan.mod", "");
+            if (!"false".equalsIgnoreCase(revProp)) {
+                if ("com.google.android.youtube".equals(packageName) 
+                        || "com.google.android.apps.youtube.music".equals(packageName)) {
+                    
+                    // "mContext" here refers to the app calling the PackageManager (e.g., Play Store)
+                    String caller = mContext.getOpPackageName();
+                    
+                    if ("com.android.vending".equals(caller)) {
+                        android.util.Log.i("ReVanHide", 
+                            "Hiding " + packageName + " from Play Store direct lookup");
+                        // We simulate that the package does not exist
+                        throw new NameNotFoundException(packageName);
+                    }
+                }
+            }
+        } catch (NameNotFoundException e) {
+            throw e; // Important: Rethrow the intentional exception so the method exits here
+        } catch (Exception e) {
+            // Ignore other errors so we don't crash system calls
+            android.util.Log.w("ReVanHide", "Patch error in getPackageInfoAsUser", e);
+        }
+        // --- END HIDE PATCH ---
+
         PackageInfo pi =
                 getPackageInfoAsUserCached(
                         packageName,
