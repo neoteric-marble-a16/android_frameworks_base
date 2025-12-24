@@ -753,6 +753,7 @@ class AppLockManagerService(
                 withContext(Dispatchers.IO) {
                     config.write()
                 }
+                NeotericUtils.forceStopDefaultLauncher(context)
             }
         }
     }
