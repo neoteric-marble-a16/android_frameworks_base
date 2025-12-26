@@ -678,6 +678,11 @@ public final class InputMethodManagerService implements IInputMethodManagerImpl.
                 }
                 break;
             }
+            case Settings.Secure.NAVBAR_IME_SPACE: {
+                final var userData = getUserData(userId);
+                sendOnNavButtonFlagsChangedLocked(userData);
+                break;
+            }            
             case Settings.Secure.STYLUS_HANDWRITING_ENABLED: {
                 InputMethodManager.invalidateLocalStylusHandwritingAvailabilityCaches();
                 InputMethodManager
@@ -1508,6 +1513,7 @@ public final class InputMethodManagerService implements IInputMethodManagerImpl.
                                 Settings.Secure.SELECTED_INPUT_METHOD_SUBTYPE,
                                 Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD,
                                 Settings.Secure.STYLUS_HANDWRITING_ENABLED,
+                                Settings.Secure.NAVBAR_IME_SPACE,
                         }, (key, flags, userId) -> {
                             synchronized (ImfLock.class) {
                                 onSecureSettingsChangedLocked(key, userId);
@@ -2706,7 +2712,11 @@ public final class InputMethodManagerService implements IInputMethodManagerImpl.
         final boolean hasNavigationBar = mWindowManagerInternal
                 .hasNavigationBar(tokenDisplayId != INVALID_DISPLAY
                         ? tokenDisplayId : DEFAULT_DISPLAY);
-        final boolean canImeDrawsImeNavBar = userData.mImeDrawsNavBar.get() && hasNavigationBar;
+        final boolean showImeSpace = Settings.Secure.getIntForUser(
+                mContext.getContentResolver(), 
+                Settings.Secure.NAVBAR_IME_SPACE,
+                1, userId) == 1;
+        final boolean canImeDrawsImeNavBar = userData.mImeDrawsNavBar.get() && hasNavigationBar && showImeSpace;
         final boolean shouldShowImeSwitcherWhenImeIsShown = shouldShowImeSwitcherLocked(
                 InputMethodService.IME_ACTIVE | InputMethodService.IME_VISIBLE, userId);
         return (canImeDrawsImeNavBar ? InputMethodNavButtonFlags.IME_DRAWS_IME_NAV_BAR : 0)
