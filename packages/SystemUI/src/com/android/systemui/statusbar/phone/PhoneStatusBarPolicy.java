@@ -120,6 +120,8 @@ public class PhoneStatusBarPolicy
 
     private static final String BLUETOOTH_SHOW_BATTERY =
             "system:" + Settings.System.BLUETOOTH_SHOW_BATTERY;
+            
+    private static final String ICON_BLACKLIST = "icon_blacklist";
 
     private final String mSlotCast;
     private final String mSlotHotspot;
@@ -177,6 +179,9 @@ public class PhoneStatusBarPolicy
 
     private boolean mProfileIconVisible = false;
     private boolean mFirewallVisible = false;
+    
+    private boolean mBlockMute;
+    private boolean mBlockVolume;
 
     private int mLastResumedActivityUid = -1;
 
@@ -386,6 +391,7 @@ public class PhoneStatusBarPolicy
         mCommandQueue.addCallback(this);
 
         mTunerService.addTunable(this, BLUETOOTH_SHOW_BATTERY);
+        mTunerService.addTunable(this, ICON_BLACKLIST);
 
         // Get initial user setup state
         onUserSetupChanged();
@@ -442,6 +448,12 @@ public class PhoneStatusBarPolicy
                 mShowBluetoothBattery =
                         TunerService.parseIntegerSwitch(newValue, true);
                 updateBluetooth();
+                break;
+            case ICON_BLACKLIST:
+                String blacklist = newValue == null ? "" : newValue;
+                mBlockMute = blacklist.contains("mute");
+                mBlockVolume = blacklist.contains("volume");
+                updateVolumeZen();
                 break;
             default:
                 break;
@@ -537,12 +549,19 @@ public class PhoneStatusBarPolicy
             if (ringerModeInternal != null) {
                 if (ringerModeInternal == AudioManager.RINGER_MODE_VIBRATE) {
                     vibrateVisible = true;
+                    mIconController.setIcon(mSlotVibrate, R.drawable.stat_sys_ringer_vibrate,
+                            mResources.getString(R.string.accessibility_ringer_vibrate));
                 } else if (ringerModeInternal == AudioManager.RINGER_MODE_SILENT) {
-                    muteVisible = true;
+                    muteVisible = true; 
+                    mIconController.setIcon(mSlotMute, R.drawable.stat_sys_ringer_silent,
+                            mResources.getString(R.string.accessibility_ringer_silent));
                 }
             }
         }
 
+        if (mBlockVolume) vibrateVisible = false;
+        if (mBlockMute) muteVisible = false;
+        
         if (vibrateVisible != mVibrateVisible) {
             mIconController.setIconVisibility(mSlotVibrate, vibrateVisible);
             mVibrateVisible = vibrateVisible;
