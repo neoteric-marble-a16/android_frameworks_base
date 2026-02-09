@@ -456,6 +456,15 @@ constructor(
         viewModel.panelExpansionFraction = panelExpansionFraction
         viewModel.squishinessFraction = squishinessFraction
         viewModel.proposedTranslation = headerTranslation
+        // Handle lockscreen media art visibility
+        val fullyCollapsed = qsExpansionFraction == 0f
+        val mediaArtUtils = com.android.systemui.util.MediaArtUtils.getInstance(getContext())
+        mediaArtUtils.setPanelFullyCollapsed(fullyCollapsed)
+        if (!fullyCollapsed) {
+            mediaArtUtils.hideMediaArt()
+        } else {
+            mediaArtUtils.updateMediaArtVisibility()
+        }
     }
 
     override fun setHeaderListening(listening: Boolean) {
