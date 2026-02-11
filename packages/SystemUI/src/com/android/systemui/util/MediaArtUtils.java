@@ -318,7 +318,6 @@ public class MediaArtUtils {
     }
 
     public void updateMediaArtVisibility() {
-        updateMediaController();
         if (canShowLsMediaArt()) {
             showMediaArt();
         } else {
@@ -327,7 +326,6 @@ public class MediaArtUtils {
     }
 
     private void showMediaArt() {
-        updateMediaController();
         if (mLsMediaScrim == null || mLsMediaScrim.getVisibility() == View.VISIBLE) return;
         mLsMediaScrim.post(() -> {
             mLsMediaScrim.setBackground(currLayeredDrawable);
@@ -342,7 +340,6 @@ public class MediaArtUtils {
     }
 
     public void hideMediaArt() {
-        updateMediaController();
         if (mLsMediaScrim == null || mLsMediaScrim.getVisibility() == View.GONE) return;
         mLsMediaScrim.animate()
             .alpha(0f)
