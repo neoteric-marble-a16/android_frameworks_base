@@ -51,6 +51,7 @@ import com.android.systemui.keyguard.domain.interactor.KeyguardTransitionInterac
 import com.android.systemui.keyguard.shared.model.KeyguardState
 import com.android.systemui.power.domain.interactor.PowerInteractor
 import com.android.systemui.res.R
+import com.android.systemui.shade.domain.interactor.ShadeInteractor
 import com.android.systemui.statusbar.policy.KeyguardStateController
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -84,6 +85,7 @@ constructor(
     private val promptUdfpsTouchOverlayViewModel: Lazy<PromptUdfpsTouchOverlayViewModel>,
     private val udfpsOverlayInteractor: UdfpsOverlayInteractor,
     private val powerInteractor: PowerInteractor,
+    private val shadeInteractor: ShadeInteractor,
     @Application private val scope: CoroutineScope,
 ) {
     private val currentStateUpdatedToOffAodOrDozing: Flow<Unit> =
@@ -110,12 +112,12 @@ constructor(
 
     private var overlayTouchListener: TouchExplorationStateChangeListener? = null
 
-    private val useFrameworkDimming = context.resources.getBoolean(
+    private val useFrameworkDimming = inflater.context.resources.getBoolean(
         com.android.systemui.res.R.bool.config_udfpsFrameworkDimming
     )
 
     private val udfpsHelper: UdfpsHelper? = if (useFrameworkDimming) {
-        UdfpsHelper(context, windowManager, shadeInteractor, requestReason)
+        UdfpsHelper(inflater.context, windowManager, shadeInteractor, requestReason)
     } else {
         null
     }
