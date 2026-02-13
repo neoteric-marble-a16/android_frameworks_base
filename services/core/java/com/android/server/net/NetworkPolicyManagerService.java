@@ -391,7 +391,8 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
 
     private static final int LINEAGE_VERSION_INIT = 1;
     private static final int LINEAGE_VERSION_REINSTATED_POLICY_REJECT_ALL = 2;
-    private static final int LINEAGE_VERSION_LATEST = LINEAGE_VERSION_REINSTATED_POLICY_REJECT_ALL;
+    private static final int LINEAGE_VERSION_FIXED_POLICY_REJECT_ALL = 3;
+    private static final int LINEAGE_VERSION_LATEST = LINEAGE_VERSION_FIXED_POLICY_REJECT_ALL;
 
     @VisibleForTesting
     public static final int TYPE_WARNING = SystemMessage.NOTE_NET_WARNING;
@@ -1484,15 +1485,19 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
             if (uid == -1) return;
 
             if (ACTION_PACKAGE_ADDED.equals(action)) {
+                if (intent.getBooleanExtra(EXTRA_REPLACING, false)) {
+                    if (LOGV) Slog.v(TAG, "ACTION_PACKAGE_ADDED Not new app, skip it uid=" + uid);
+                    return;
+                }
                 // update rules for UID, since it might be subject to
                 // global background data policy
-                // Clear the cache for the app
                 synchronized (mUidRulesFirstLock) {
-                    mInternetPermissionMap.delete(uid);
                     if (!hasInternetPermissionUL(uid) && !isSystemApp(uid)) {
                         Slog.i(TAG, "ACTION_PACKAGE_ADDED for uid=" + uid + ", no INTERNET");
                         addUidPolicy(uid, POLICY_REJECT_ALL);
                     }
+                    // Clear the cache after checking to force re-evaluation next time
+                    mInternetPermissionMap.delete(uid);
                     updateRestrictionRulesForUidUL(uid);
                 }
             }
@@ -2840,13 +2845,14 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
             }
             for (final ApplicationInfo appInfo : appsForUser) {
                 final int uid = appInfo.uid;
-                // Allow apps that are already allowlisted, or that have restricted networking
-                // permission, or that are system apps without the INTERNET permission.
-                final boolean shouldAllow = uidsAllowedOnRestrictedNetworks.contains(uid)
-                        || hasRestrictedModeAccess(uid);
-                if (!shouldAllow) {
-                    synchronized (mUidRulesFirstLock) {
-                        if (appInfo.isSystemApp() && !hasInternetPermissionUL(uid)) {
+                synchronized (mUidRulesFirstLock) {
+                    // Allow apps that have INTERNET permission, are already allowlisted,
+                    // or have restricted networking permission.
+                    final boolean shouldAllow = hasInternetPermissionUL(uid)
+                            || uidsAllowedOnRestrictedNetworks.contains(uid)
+                            || hasRestrictedModeAccess(uid);
+                    if (!shouldAllow) {
+                        if (appInfo.isSystemApp()) {
                             // Allow system-bundled apps to add the INTERNET permission later
                             // without the user needing to turn on their network access manually;
                             // don't add system apps lacking that permission to the denylist now.
@@ -3128,6 +3134,41 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
                 && isMigratingFromAtLeastAndroid12) {
             migrateToPolicyRejectAll();
         }
+
+        // Fix: Remove POLICY_REJECT_ALL from apps that have INTERNET permission
+        // This corrects the previous migration that incorrectly blocked all apps
+        if (lineageVersion < LINEAGE_VERSION_FIXED_POLICY_REJECT_ALL) {
+            fixPolicyRejectAll();
+        }
+    }
+
+    /**
+     * Fix incorrect POLICY_REJECT_ALL that was applied to apps with INTERNET permission.
+     * This removes the reject policy from apps that should have network access.
+     */
+    @GuardedBy("mUidRulesFirstLock")
+    private void fixPolicyRejectAll() {
+        Slog.i(TAG, "fixPolicyRejectAll: Removing incorrect POLICY_REJECT_ALL from apps");
+        final Set<Integer> uidsToFix = new ArraySet<>();
+
+        synchronized (mUidRulesFirstLock) {
+            for (int i = 0; i < mUidPolicy.size(); i++) {
+                final int uid = mUidPolicy.keyAt(i);
+                final int policy = mUidPolicy.valueAt(i);
+                // If app has POLICY_REJECT_ALL but also has INTERNET permission, remove the policy
+                if ((policy & POLICY_REJECT_ALL) != 0 && hasInternetPermissionUL(uid)) {
+                    uidsToFix.add(uid);
+                }
+            }
+        }
+
+        // Remove POLICY_REJECT_ALL from apps with INTERNET permission
+        for (final int uid : uidsToFix) {
+            Slog.i(TAG, "fixPolicyRejectAll: Removing POLICY_REJECT_ALL from uid=" + uid);
+            removeUidPolicy(uid, POLICY_REJECT_ALL);
+        }
+
+        Slog.i(TAG, "fixPolicyRejectAll: Fixed " + uidsToFix.size() + " apps");
     }
 
     /**
