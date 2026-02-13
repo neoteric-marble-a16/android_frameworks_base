@@ -74,6 +74,12 @@ constructor(
                     val result = future.get()
                     Log.d(TAG, "Saved screenshot: $result")
                     logScreenshotResultStatus(result.uri, screenshot)
+                    val bitmap = screenshot.bitmap
+                    if (result.uri != null && bitmap != null) {
+                        notificationsControllerFactory
+                            .create(screenshot.displayId)
+                            .showPostActionNotification(result.uri, bitmap)
+                    }
                     finisher.accept(result.uri)
                     requestCallback.onFinish()
                 } catch (e: Exception) {

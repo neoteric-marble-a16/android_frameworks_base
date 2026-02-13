@@ -662,6 +662,10 @@ public class LegacyScreenshotController implements InteractiveScreenshotHandler 
                 ImageExporter.Result result = future.get();
                 Log.d(TAG, "Saved screenshot: " + result);
                 logScreenshotResultStatus(result.uri, screenshot.getUserHandle());
+                if (result.uri != null && screenshot.getBitmap() != null) {
+                    mNotificationsController.showPostActionNotification(
+                            result.uri, screenshot.getBitmap());
+                }
                 onResult.accept(result);
                 if (DEBUG_CALLBACK) {
                     Log.d(TAG, "finished background processing, Calling (Consumer<Uri>) "

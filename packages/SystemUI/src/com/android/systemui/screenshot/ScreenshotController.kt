@@ -551,6 +551,10 @@ internal constructor(
                     val result = future.get()
                     Log.d(TAG, "Saved screenshot: $result")
                     logScreenshotResultStatus(result.uri, screenshot.userHandle)
+                    val bitmap = screenshot.bitmap
+                    if (result.uri != null && bitmap != null) {
+                        notificationController.showPostActionNotification(result.uri, bitmap)
+                    }
                     onResult.accept(result)
                     if (LogConfig.DEBUG_CALLBACK) {
                         Log.d(TAG, "finished bg processing, calling back with uri: ${result.uri}")
