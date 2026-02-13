@@ -292,7 +292,7 @@ public class RecordingService extends Service implements ScreenMediaRecorderList
                             .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                     // Remove notification
                     final int id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, mNotificationId);
-                    mNotificationManager.cancelAsUser(null, id, currentUser);
+                    mNotificationManager.cancelAsUser(TAG, id, currentUser);
                     maybeDismissGroup(currentUser);
                     return false;
                 }, false, false);
@@ -309,10 +309,9 @@ public class RecordingService extends Service implements ScreenMediaRecorderList
                         this,
                         R.string.screenrecord_delete_description,
                         Toast.LENGTH_LONG).show();
-
                 // Remove notification
                 final int id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, mNotificationId);
-                mNotificationManager.cancelAsUser(null, id, currentUser);
+                mNotificationManager.cancelAsUser(TAG, id, currentUser);
                 maybeDismissGroup(currentUser);
                 Log.d(TAG, "Deleted recording " + uri);
 
@@ -663,7 +662,7 @@ public class RecordingService extends Service implements ScreenMediaRecorderList
 
     protected void onRecordingSaved(ScreenMediaRecorder.SavedRecording savedRecording,
             UserHandle currentUser) {
-        mNotificationManager.notifyAsUser(null, mNotificationId,
+        mNotificationManager.notifyAsUser(TAG, mNotificationId,
                 createSaveNotification(savedRecording), currentUser);
     }
 
