@@ -217,7 +217,9 @@ constructor(
                         customR.dimen.status_view_margin_horizontal
                     ),
             )
-            val smallClockTopMargin = keyguardClockViewModel.getSmallClockTopMargin()
+            // Use direct resource lookup for keyguard_clock_top_margin
+            val smallClockTopMargin =
+                context.resources.getDimensionPixelSize(R.dimen.keyguard_clock_top_margin)
             create(R.id.small_clock_guideline_top, ConstraintSet.HORIZONTAL_GUIDELINE)
             setGuidelineBegin(R.id.small_clock_guideline_top, smallClockTopMargin)
             connect(customR.id.lockscreen_clock_view, TOP, R.id.small_clock_guideline_top, BOTTOM)
@@ -226,7 +228,7 @@ constructor(
             setTransformPivot(customR.id.lockscreen_clock_view_large, Float.NaN, Float.NaN)
 
             val smallClockBottom =
-                keyguardClockViewModel.getSmallClockTopMargin() +
+                smallClockTopMargin +
                     context.resources.getDimensionPixelSize(customR.dimen.small_clock_height)
             val marginBetweenSmartspaceAndNotification =
                 context.resources.getDimensionPixelSize(

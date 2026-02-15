@@ -218,17 +218,28 @@ constructor(
                         )
                     }
                 } else {
+                    // When clockReactiveSmartspaceLayout is false but large clock is visible,
+                    // we need to push smartspace down since it's connected to the hidden small clock
+                    val smartspaceTopMargin = if (keyguardClockViewModel.isLargeClockVisible.value) {
+                        context.resources.getDimensionPixelSize(
+                            customR.dimen.keyguard_smartspace_top_offset
+                        )
+                    } else {
+                        0
+                    }
                     connect(
                         sharedR.id.date_smartspace_view,
                         ConstraintSet.TOP,
                         customR.id.lockscreen_clock_view,
                         ConstraintSet.BOTTOM,
+                        smartspaceTopMargin,
                     )
                     connect(
                         sharedR.id.bc_smartspace_view,
                         ConstraintSet.TOP,
                         customR.id.lockscreen_clock_view,
                         ConstraintSet.BOTTOM,
+                        smartspaceTopMargin,
                     )
                 }
             }
