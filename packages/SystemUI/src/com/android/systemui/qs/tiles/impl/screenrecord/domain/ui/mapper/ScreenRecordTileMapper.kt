@@ -37,7 +37,7 @@ constructor(
     override fun map(config: QSTileConfig, data: ScreenRecordModel): QSTileState =
         QSTileState.build(resources, theme, config.uiConfig) {
             label = resources.getString(R.string.quick_settings_screen_record_label)
-            supportedActions = setOf(QSTileState.UserAction.CLICK)
+            supportedActions = setOf(QSTileState.UserAction.CLICK, QSTileState.UserAction.LONG_CLICK)
             val iconRes: Int
             when (data) {
                 is ScreenRecordModel.Recording -> {

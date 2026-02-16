@@ -121,13 +121,17 @@ public class ScreenRecordTile extends QSTileImpl<QSTile.BooleanState>
     public BooleanState newTileState() {
         BooleanState state = new BooleanState();
         state.label = mContext.getString(R.string.quick_settings_screen_record_label);
-        state.handlesLongClick = false;
+        state.handlesLongClick = true;
         return state;
     }
 
     @Override
     protected void handleClick(@Nullable Expandable expandable) {
-        handleClick(() -> showDialog(expandable));
+        // For collapsed tile click, start recording immediately with saved preferences
+        handleClick(() -> {
+            mController.startRecordingWithSavedPreferences();
+            onStartRecordingClicked();
+        });
     }
 
     private void showDialog(@Nullable Expandable expandable) {
@@ -243,6 +247,12 @@ public class ScreenRecordTile extends QSTileImpl<QSTile.BooleanState>
     @Override
     public int getMetricsCategory() {
         return 0;
+    }
+
+    @Override
+    protected void handleLongClick(@Nullable Expandable expandable) {
+        // Long press always shows the dialog
+        handleClick(() -> showDialog(expandable));
     }
 
     @Nullable

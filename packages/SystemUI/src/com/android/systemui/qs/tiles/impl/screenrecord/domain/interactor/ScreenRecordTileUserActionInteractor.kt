@@ -67,11 +67,18 @@ constructor(
                         }
                         is ScreenRecordModel.DoingNothing ->
                             withContext(mainContext) {
-                                showPrompt(action.expandable, user.identifier)
+                                // Start recording immediately with saved preferences
+                                recordingController.startRecordingWithSavedPreferences()
+                                dialogTransitionAnimator.disableAllCurrentDialogsExitAnimations()
+                                panelInteractor.collapsePanels()
                             }
                     }
                 }
-                is QSTileUserAction.LongClick -> {} // no-op
+                is QSTileUserAction.LongClick ->
+                    // Long press always shows the dialog
+                    withContext(mainContext) {
+                        showPrompt(action.expandable, user.identifier)
+                    }
                 is QSTileUserAction.ToggleClick -> {}
             }
         }

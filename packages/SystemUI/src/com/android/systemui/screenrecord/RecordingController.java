@@ -23,11 +23,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.app.Activity;
 import android.media.projection.StopReason;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Process;
 import android.os.UserHandle;
+import android.view.Display;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,6 +42,8 @@ import com.android.systemui.mediaprojection.MediaProjectionMetricsLogger;
 import com.android.systemui.mediaprojection.SessionCreationSource;
 import com.android.systemui.mediaprojection.devicepolicy.ScreenCaptureDevicePolicyResolver;
 import com.android.systemui.mediaprojection.devicepolicy.ScreenCaptureDisabledDialogDelegate;
+import com.android.systemui.Prefs;
+import com.android.systemui.settings.UserContextProvider;
 import com.android.systemui.settings.UserTracker;
 import com.android.systemui.statusbar.policy.CallbackController;
 
@@ -72,6 +76,7 @@ public class RecordingController
             mScreenRecordPermissionDialogDelegateFactory;
     private final ScreenRecordPermissionViewBinder.Factory
             mScreenRecordPermissionViewBinderFactory;
+    private final UserContextProvider mUserContextProvider;
 
     protected static final String INTENT_UPDATE_STATE =
             "com.android.systemui.screenrecord.UPDATE_STATE";
@@ -121,7 +126,8 @@ public class RecordingController
             ScreenCaptureDisabledDialogDelegate screenCaptureDisabledDialogDelegate,
             ScreenRecordPermissionDialogDelegate.Factory
                     screenRecordPermissionDialogDelegateFactory,
-            ScreenRecordPermissionViewBinder.Factory screenRecordPermissionViewBinderFactory) {
+            ScreenRecordPermissionViewBinder.Factory screenRecordPermissionViewBinderFactory,
+            UserContextProvider userContextProvider) {
         mMainExecutor = mainExecutor;
         mDevicePolicyResolver = devicePolicyResolver;
         mBroadcastDispatcher = broadcastDispatcher;
@@ -131,6 +137,7 @@ public class RecordingController
         mScreenCaptureDisabledDialogDelegate = screenCaptureDisabledDialogDelegate;
         mScreenRecordPermissionDialogDelegateFactory = screenRecordPermissionDialogDelegateFactory;
         mScreenRecordPermissionViewBinderFactory = screenRecordPermissionViewBinderFactory;
+        mUserContextProvider = userContextProvider;
 
         BroadcastOptions options = BroadcastOptions.makeBasic();
         options.setInteractive(true);
@@ -307,6 +314,71 @@ public class RecordingController
 
     public @StopReason int getStopReason() {
         return mStopReason;
+    }
+
+    // Preference keys (must match ScreenRecordPermissionViewBinder)
+    private static final String PREF_TAPS = "screenrecord_show_taps";
+    private static final String PREF_LOW = "screenrecord_use_low_quality";
+    private static final String PREF_LONGER = "screenrecord_use_longer_timeout";
+    private static final String PREF_AUDIO = "screenrecord_use_audio";
+    private static final String PREF_AUDIO_SOURCE = "screenrecord_audio_source";
+    private static final String PREF_SKIP = "screenrecord_skip_timer";
+    private static final String PREF_HEVC = "screenrecord_use_hevc";
+
+    private static final long DELAY_MS = 3000;
+    private static final long NO_DELAY = 100;
+    private static final long INTERVAL_MS = 1000;
+
+    /**
+     * Start recording immediately using saved preferences.
+     * This is used when the user clicks on the collapsed QS tile.
+     * Always records the entire screen (not single app mode).
+     */
+    public void startRecordingWithSavedPreferences() {
+        if (isScreenCaptureDisabled()) {
+            return;
+        }
+
+        android.content.Context userContext = mUserContextProvider.getUserContext();
+
+        mMediaProjectionMetricsLogger.notifyProjectionInitiated(
+                getHostUid(), SessionCreationSource.SYSTEM_UI_SCREEN_RECORDER);
+
+        boolean showTaps = Prefs.getInt(userContext, PREF_TAPS, 0) == 1;
+        boolean lowQuality = Prefs.getInt(userContext, PREF_LOW, 0) == 1;
+        boolean longerDuration = Prefs.getInt(userContext, PREF_LONGER, 0) == 1;
+        boolean useAudio = Prefs.getInt(userContext, PREF_AUDIO, 0) == 1;
+        int audioSourceIndex = Prefs.getInt(userContext, PREF_AUDIO_SOURCE, 0);
+        boolean skipTime = Prefs.getInt(userContext, PREF_SKIP, 0) == 1;
+        boolean hevc = Prefs.getInt(userContext, PREF_HEVC, 1) == 1;
+
+        int audioMode = useAudio ? audioSourceIndex + 1 : 0; // +1 because NONE is 0
+
+        PendingIntent startIntent = PendingIntent.getForegroundService(
+                userContext,
+                RecordingService.REQUEST_CODE,
+                RecordingService.getStartIntent(
+                        userContext,
+                        Activity.RESULT_OK,
+                        audioMode,
+                        showTaps,
+                        Display.DEFAULT_DISPLAY,
+                        null, // captureTarget
+                        lowQuality,
+                        longerDuration,
+                        hevc
+                ),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        PendingIntent stopIntent = PendingIntent.getService(
+                userContext,
+                RecordingService.REQUEST_CODE,
+                RecordingService.getStopIntent(userContext),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        startCountdown(skipTime ? NO_DELAY : DELAY_MS, INTERVAL_MS, startIntent, stopIntent);
     }
 
     @Override
