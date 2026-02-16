@@ -86,7 +86,7 @@ class ScreenRecordPermissionViewBinder(
         hostUserHandle,
         hostUid,
         mediaProjectionMetricsLogger,
-        defaultSelectedMode = SINGLE_APP,
+        defaultSelectedMode = Prefs.getInt(userContextProvider.userContext, PREF_MODE, SINGLE_APP),
         displayManager,
         controller,
         activityStarter,
@@ -235,6 +235,8 @@ class ScreenRecordPermissionViewBinder(
     override fun onItemSelected(adapterView: AdapterView<*>?, view: View, pos: Int, id: Long) {
         super.onItemSelected(adapterView, view, pos, id)
         updateTapsViewVisibility()
+        // Save the selected mode
+        Prefs.putInt(userContextProvider.userContext, PREF_MODE, selectedScreenShareOption.mode)
     }
 
     private fun updateTapsViewVisibility() {
@@ -324,6 +326,7 @@ class ScreenRecordPermissionViewBinder(
         private const val PREF_AUDIO_SOURCE = "screenrecord_audio_source"
         private const val PREF_SKIP = "screenrecord_skip_timer"
         private const val PREF_HEVC = "screenrecord_use_hevc"
+        private const val PREF_MODE = "screenrecord_mode"
 
         private val RECORDABLE_DISPLAY_TYPES =
             intArrayOf(
