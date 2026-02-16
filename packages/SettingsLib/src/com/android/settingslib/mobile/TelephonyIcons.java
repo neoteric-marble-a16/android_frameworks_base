@@ -76,21 +76,29 @@ public class TelephonyIcons {
             flagged(R.drawable.ic_5g_plus_mobiledata, R.drawable.ic_5g_plus_mobiledata_updated);
     public static final int ICON_CWF =
             flagged(R.drawable.ic_carrier_wifi, R.drawable.ic_carrier_wifi_updated);
-    public static final int ICON_5G_SA = R.drawable.ic_5g_mobiledata;
-    public static final int ICON_5G_BASIC = R.drawable.ic_5g_mobiledata;
-    public static final int ICON_5G_UWB = R.drawable.ic_5g_uwb_mobiledata;
+    public static final int ICON_5G_SA =
+            flagged(R.drawable.ic_5g_mobiledata, R.drawable.ic_5g_mobiledata_updated);
+    public static final int ICON_5G_BASIC =
+            flagged(R.drawable.ic_5g_mobiledata, R.drawable.ic_5g_mobiledata_updated);
+    public static final int ICON_5G_UWB =
+            flagged(R.drawable.ic_5g_uwb_mobiledata, R.drawable.ic_5g_mobiledata_updated);
 // QTI_BEGIN: 2023-12-17: Data: SystemUI: Enhanced 5g icon
-    public static final int ICON_5G_PLUS_PLUS = R.drawable.ic_5g_plus_plus_mobiledata;
+    public static final int ICON_5G_PLUS_PLUS =
+            flagged(R.drawable.ic_5g_plus_plus_mobiledata, R.drawable.ic_5g_plus_mobiledata_updated);
 // QTI_END: 2023-12-17: Data: SystemUI: Enhanced 5g icon
 // QTI_BEGIN: 2024-05-22: Android_UI: SystemUI: Display 5GA icon for 3CC
-    public static final int ICON_5G_A = R.drawable.ic_5g_a_mobiledata;
+    public static final int ICON_5G_A =
+            flagged(R.drawable.ic_5g_a_mobiledata, R.drawable.ic_5g_mobiledata_updated);
 // QTI_END: 2024-05-22: Android_UI: SystemUI: Display 5GA icon for 3CC
     public static final int ICON_VOWIFI = R.drawable.ic_vowifi;
     public static final int ICON_VOWIFI_CALLING = R.drawable.ic_vowifi_calling;
 // QTI_BEGIN: 2024-05-21: Android_UI: SystemUI: Add 6Rx icons support for NrIcons
-    public static final int ICON_5G_BASIC_6RX = R.drawable.ic_5g_6rx_mobiledata;
-    public static final int ICON_5G_UWB_6RX = R.drawable.ic_5g_uwb_6rx_mobiledata;
-    public static final int ICON_5G_PLUS_PLUS_6RX = R.drawable.ic_5g_plus_plus_6rx_mobiledata;
+    public static final int ICON_5G_BASIC_6RX =
+            flagged(R.drawable.ic_5g_6rx_mobiledata, R.drawable.ic_5g_mobiledata_updated);
+    public static final int ICON_5G_UWB_6RX =
+            flagged(R.drawable.ic_5g_uwb_6rx_mobiledata, R.drawable.ic_5g_mobiledata_updated);
+    public static final int ICON_5G_PLUS_PLUS_6RX =
+            flagged(R.drawable.ic_5g_plus_plus_6rx_mobiledata, R.drawable.ic_5g_plus_mobiledata_updated);
 // QTI_END: 2024-05-21: Android_UI: SystemUI: Add 6Rx icons support for NrIcons
 
     /** Make it slightly more obvious which resource we are using */
