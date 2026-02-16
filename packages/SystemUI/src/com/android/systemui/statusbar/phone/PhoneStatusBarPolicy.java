@@ -94,6 +94,8 @@ import com.android.systemui.util.RingerModeTracker;
 import com.android.systemui.util.kotlin.JavaAdapter;
 import com.android.systemui.util.time.DateFormatUtil;
 
+import com.android.settingslib.flags.Flags;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
@@ -120,6 +122,11 @@ public class PhoneStatusBarPolicy
 
     private static final String BLUETOOTH_SHOW_BATTERY =
             "system:" + Settings.System.BLUETOOTH_SHOW_BATTERY;
+
+    /** Helper to switch between old and new icons based on flag */
+    private static int flaggedIcon(int oldIcon, int newIcon) {
+        return Flags.newStatusBarIcons() ? newIcon : oldIcon;
+    }
 
     private final String mSlotCast;
     private final String mSlotHotspot;
@@ -308,15 +315,18 @@ public class PhoneStatusBarPolicy
         mIconController.setIconVisibility(mSlotAlarmClock, false);
 
         // zen
-        mIconController.setIcon(mSlotZen, R.drawable.stat_sys_dnd, null);
+        mIconController.setIcon(mSlotZen, flaggedIcon(R.drawable.stat_sys_dnd,
+                R.drawable.stat_sys_dnd_updated), null);
         mIconController.setIconVisibility(mSlotZen, false);
 
         // vibrate
-        mIconController.setIcon(mSlotVibrate, R.drawable.stat_sys_ringer_vibrate,
+        mIconController.setIcon(mSlotVibrate, flaggedIcon(R.drawable.stat_sys_ringer_vibrate,
+                R.drawable.stat_sys_ringer_vibrate_updated),
                 mResources.getString(R.string.accessibility_ringer_vibrate));
         mIconController.setIconVisibility(mSlotVibrate, false);
         // mute
-        mIconController.setIcon(mSlotMute, R.drawable.stat_sys_ringer_silent,
+        mIconController.setIcon(mSlotMute, flaggedIcon(R.drawable.stat_sys_ringer_silent,
+                R.drawable.stat_sys_ringer_silent_updated),
                 mResources.getString(R.string.accessibility_ringer_silent));
         mIconController.setIconVisibility(mSlotMute, false);
         updateVolumeZen();
@@ -490,15 +500,15 @@ public class PhoneStatusBarPolicy
 
         if (DndTile.isVisible(mSharedPreferences) || DndTile.isCombinedIcon(mSharedPreferences)) {
             zenVisible = zen != Global.ZEN_MODE_OFF;
-            zenIconId = R.drawable.stat_sys_dnd;
+            zenIconId = flaggedIcon(R.drawable.stat_sys_dnd, R.drawable.stat_sys_dnd_updated);
             zenDescription = mResources.getString(R.string.quick_settings_dnd_label);
         } else if (zen == Global.ZEN_MODE_NO_INTERRUPTIONS) {
             zenVisible = true;
-            zenIconId = R.drawable.stat_sys_dnd;
+            zenIconId = flaggedIcon(R.drawable.stat_sys_dnd, R.drawable.stat_sys_dnd_updated);
             zenDescription = mResources.getString(R.string.interruption_level_none);
         } else if (zen == Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS) {
             zenVisible = true;
-            zenIconId = R.drawable.stat_sys_dnd;
+            zenIconId = flaggedIcon(R.drawable.stat_sys_dnd, R.drawable.stat_sys_dnd_updated);
             zenDescription = mResources.getString(R.string.interruption_level_priority);
         }
 
