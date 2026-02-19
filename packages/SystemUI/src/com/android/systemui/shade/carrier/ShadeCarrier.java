@@ -108,7 +108,8 @@ public class ShadeCarrier extends LinearLayout {
         }
         mLastSignalState = state;
         mIsSingleCarrier = isSingleCarrier;
-        final boolean visible = state.visible && !isSingleCarrier;
+        // Never show signal icon in carrier area - it's already shown in system icons
+        final boolean visible = false;
         mMobileGroup.setVisibility(visible ? View.VISIBLE : View.GONE);
         mSpacer.setVisibility(isSingleCarrier ? View.VISIBLE : View.GONE);
         if (visible) {

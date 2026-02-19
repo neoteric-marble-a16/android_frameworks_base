@@ -24,11 +24,8 @@ import com.android.systemui.kairos.BuildSpec
 import com.android.systemui.kairos.ExperimentalKairosApi
 import com.android.systemui.kairos.KairosNetwork
 import com.android.systemui.res.R
-import com.android.systemui.statusbar.StatusBarIconView.STATE_ICON
 import com.android.systemui.statusbar.phone.StatusBarLocation
 import com.android.systemui.statusbar.pipeline.mobile.ui.MobileViewLogger
-import com.android.systemui.statusbar.pipeline.mobile.ui.binder.MobileIconBinder
-import com.android.systemui.statusbar.pipeline.mobile.ui.binder.MobileIconBinderKairos
 import com.android.systemui.statusbar.pipeline.mobile.ui.binder.ShadeCarrierBinder
 import com.android.systemui.statusbar.pipeline.mobile.ui.binder.ShadeCarrierBinderKairos
 import com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.ShadeCarrierGroupMobileIconViewModel
@@ -70,11 +67,7 @@ class ModernShadeCarrierGroupMobileView(context: Context, attrs: AttributeSet?) 
                     as ModernShadeCarrierGroupMobileView)
                 .also {
                     it.subId = viewModel.subscriptionId
-
-                    val iconView = it.requireViewById<ModernStatusBarMobileView>(R.id.mobile_combo)
-                    iconView.initView(slot) {
-                        MobileIconBinder.bind(iconView, viewModel, STATE_ICON, logger)
-                    }
+                    // Signal icon not bound - it's already shown in system icons area
                     logger.logNewViewBinding(it, viewModel)
 
                     val textView = it.requireViewById<AutoMarqueeTextView>(R.id.mobile_carrier_text)
@@ -104,20 +97,7 @@ class ModernShadeCarrierGroupMobileView(context: Context, attrs: AttributeSet?) 
                     .apply { subId = subscriptionId }
             return view to
                 scope.launch {
-                    val iconView =
-                        view.requireViewById<ModernStatusBarMobileView>(R.id.mobile_combo)
-                    iconView.initView(slot) {
-                        val (binding, _) =
-                            MobileIconBinderKairos.bind(
-                                view = iconView,
-                                viewModel = viewModel,
-                                initialVisibilityState = STATE_ICON,
-                                logger = logger,
-                                scope = this,
-                                kairosNetwork = kairosNetwork,
-                            )
-                        binding
-                    }
+                    // Signal icon not bound - it's already shown in system icons area
                     logger.logNewViewBinding(view, viewModel, location.name)
 
                     val textView =

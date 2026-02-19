@@ -38,7 +38,7 @@
         android:singleLine="true"
         android:maxEms="7"/>
 
-    <include layout="@layout/status_bar_mobile_signal_group_new" />
+    <!-- Signal icon not included - it's already shown in system icons area -->
 
 </com.android.systemui.statusbar.pipeline.mobile.ui.view.ModernShadeCarrierGroupMobileView>
 
