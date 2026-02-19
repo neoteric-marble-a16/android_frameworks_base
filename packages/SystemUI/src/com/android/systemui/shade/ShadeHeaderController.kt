@@ -336,6 +336,10 @@ constructor(
                 updateCarrierGroupPadding()
                 clock.onDensityOrFontScaleChanged()
             }
+
+            override fun onUiModeChanged() {
+                updateHeaderColors()
+            }
         }
 
     private val nextAlarmCallback =
@@ -346,8 +350,7 @@ constructor(
     override fun onInit() {
         variableDateViewControllerFactory.create(date as VariableDateView).init()
 
-        val fgColor =
-            Utils.getColorAttrDefaultColor(header.context, android.R.attr.textColorPrimary)
+        val fgColor = resources.getColor(R.color.shade_header_text_color, header.context.theme)
         val bgColor =
             Utils.getColorAttrDefaultColor(header.context, android.R.attr.textColorPrimaryInverse)
 
@@ -376,7 +379,7 @@ constructor(
                         BatteryWithEstimate(
                             modifier = Modifier.height(17.dp).wrapContentWidth(),
                             viewModelFactory = batteryViewModelFactory,
-                            isDark = { true },
+                            isDark = { isNightMode() },
                             showEstimate = showBatteryEstimate,
                         )
                     }
@@ -397,6 +400,32 @@ constructor(
         clock.setOnClickListener(this)
         date.setOnClickListener(this)
         setBatteryClickable(true)
+    }
+
+    private fun isNightMode(): Boolean {
+        return (resources.configuration.uiMode and
+            android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+            android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
+    private fun updateHeaderColors() {
+        val fgColor = resources.getColor(R.color.shade_header_text_color, header.context.theme)
+        val bgColor =
+            Utils.getColorAttrDefaultColor(
+                header.context,
+                android.R.attr.textColorPrimaryInverse
+            )
+
+        iconManager.setTint(fgColor, bgColor)
+
+        // Re-apply text appearance so that the updated shade_header_text_color is picked up
+        clock.setTextAppearance(R.style.TextAppearance_QS_Status)
+        date.setTextAppearance(R.style.TextAppearance_QS_Status)
+        mShadeCarrierGroup.updateTextAppearance(R.style.TextAppearance_QS_Status)
+
+        if (!NewStatusBarIcons.isEnabled) {
+            batteryIcon.updateColors(fgColor, bgColor, fgColor)
+        }
     }
 
     override fun onClick(v: View) {
