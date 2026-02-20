@@ -68,7 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.android.compose.modifiers.thenIf
-import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.EditTileGridItemPadding
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BADGE_ANGLE_RAD
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BadgeIconSize
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BadgeSize
@@ -124,6 +124,7 @@ fun InteractiveTileContainer(
         modifier.resizable(tileState == Selected, resizingState).selectionBorder(
             MaterialTheme.colorScheme.primary,
             SelectedBorderWidth,
+            resizingState
         ) {
             selectionBorderAlpha
         }
@@ -176,22 +177,29 @@ fun InteractiveTileContainer(
 private fun Modifier.selectionBorder(
     selectionColor: Color,
     selectionBorderWidth: Dp,
-    selectionAlpha: () -> Float = { 0f },
-): Modifier {
-    return drawWithContent {
-        drawContent()
+    state: ResizingState,
+    selectionAlpha: () -> Float = { 0f }
+): Modifier = drawWithContent {
+    drawContent()
 
-        // Draw the border on the inside of the tile
-        val borderWidth = selectionBorderWidth.toPx()
-        drawRoundRect(
-            SolidColor(selectionColor),
-            cornerRadius = CornerRadius(TileCornerRadius.toPx()),
-            topLeft = Offset(borderWidth / 2, borderWidth / 2),
-            size = Size(size.width - borderWidth, size.height - borderWidth),
-            style = Stroke(borderWidth),
-            alpha = selectionAlpha(),
-        )
-    }
+    // Draw the border on the inside of the tile
+    val borderWidth = selectionBorderWidth.toPx()
+    val fullCircle = size.width / 2f
+    val roundedRect = fullCircle - (EditTileGridItemPadding.toPx() / 2f)
+    val cornerRadius = lerp(fullCircle, roundedRect, state.progress())
+
+    drawRoundRect(
+        brush = SolidColor(selectionColor),
+        topLeft = Offset(borderWidth / 2f, borderWidth / 2f),
+        size = Size(size.width - borderWidth, size.height - borderWidth),
+        cornerRadius = CornerRadius(cornerRadius),
+        style = Stroke(borderWidth),
+        alpha = selectionAlpha(),
+    )
+}
+
+private fun lerp(start: Float, stop: Float, fraction: Float): Float {
+    return start + (stop - start) * fraction
 }
 
 /**

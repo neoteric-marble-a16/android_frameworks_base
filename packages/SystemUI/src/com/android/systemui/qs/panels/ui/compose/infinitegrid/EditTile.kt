@@ -99,6 +99,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
@@ -141,8 +142,8 @@ import com.android.systemui.qs.panels.ui.compose.EditTileListState.Companion.INV
 import com.android.systemui.qs.panels.ui.compose.dragAndDropRemoveZone
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileList
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileSource
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.EditTileGridItemPadding
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileArrangementPadding
-import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_DISTANCE
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_SPEED
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AvailableTilesGridMinHeight
@@ -523,8 +524,8 @@ private fun CurrentTilesGrid(
 ) {
     val currentListState by rememberUpdatedState(listState)
     val totalRows = listState.tiles.lastOrNull()?.row ?: 0
-    val columnSpacing = 8.dp
-    val rowSpacing = 8.dp
+    val columnSpacing = EditTileGridItemPadding
+    val rowSpacing = EditTileGridItemPadding
     val tileSize = rememberTileSize(columns, CurrentTilesGridPadding, columnSpacing)
     val totalHeight by animateDpAsState(
         targetValue = if (tileSize > 0.dp) {
@@ -718,16 +719,23 @@ fun LazyGridScope.EditTiles(
         when (val cell = cells[index]) {
             is TileGridCell ->
                 if (dragAndDropState.isMoving(cell.tile.tileSpec)) {
-                    // If the tile is being moved, replace it with a visible spacer
-                    SpacerGridCell(
-                        Modifier.background(
-                            color =
-                                MaterialTheme.colorScheme.secondary.copy(
-                                    alpha = EditModeTileDefaults.PLACEHOLDER_ALPHA
-                                ),
-                            shape = RoundedCornerShape(TileCornerRadius),
+                    BoxWithConstraints {
+                        // If the tile is being moved, replace it with a visible spacer
+                        val tileHeight = (maxWidth / 2) - (columnSpacing / 2)
+                        val tileShape = RoundedCornerShape(
+                            if (cell.isIcon) maxWidth / 2
+                            else tileHeight / 2
                         )
-                    )
+                        SpacerGridCell(
+                            Modifier.background(
+                                color =
+                                    MaterialTheme.colorScheme.secondary.copy(
+                                        alpha = EditModeTileDefaults.PLACEHOLDER_ALPHA
+                                    ),
+                                shape = tileShape,
+                            )
+                        )
+                    }
                 } else {
                     TileGridCell(
                         cell = cell,
@@ -903,7 +911,7 @@ private fun TileGridCell(
                         DragType.Move,
                         selectionState::unSelect,
                     )
-                    .tileBackground { backgroundColor }
+                    .tileBackground(cell, columnSpacing, progress()) { backgroundColor }
             ) {
                 EditTile(
                     tile = cell.tile,
@@ -940,6 +948,7 @@ private fun CategoryHeader(category: TileCategory, modifier: Modifier = Modifier
 @Composable
 private fun AvailableTileGridCell(
     cell: AvailableTileGridCell,
+    columnSpacing: Dp = TileArrangementPadding,
     dragAndDropState: DragAndDropState,
     selectionState: MutableSelectionState,
     onAddTile: (TileSpec) -> Unit,
@@ -976,7 +985,7 @@ private fun AvailableTileGridCell(
                 } else {
                     Modifier
                 }
-            Box(draggableModifier.fillMaxSize().tileBackground { colors.background }) {
+            Box(draggableModifier.fillMaxSize().tileBackground(cell, columnSpacing) { colors.background }) {
                 // Icon
                 SmallTileContent(
                     iconProvider = { cell.tile.icon },
@@ -1096,9 +1105,28 @@ private fun MeasureScope.iconHorizontalCenter(containerSize: Int): Float {
         (CommonTileDefaults.TileStartPadding.toPx() + TileArrangementPadding.toPx())
 }
 
-private fun Modifier.tileBackground(color: () -> Color): Modifier {
-    // Clip tile contents from overflowing past the tile
-    return clip(RoundedCornerShape(TileCornerRadius)).drawBehind { drawRect(color()) }
+private fun Modifier.tileBackground(
+    cell: SizedTile<EditTileViewModel>,
+    columnSpacing: Dp,
+    progress: Float = 0f,
+    color: () -> Color
+): Modifier = drawWithContent {
+    val fullCircle = size.width / 2f
+    val tileHeight = fullCircle - (columnSpacing.toPx() / 2f)
+    val roundedRect = tileHeight / 2f
+
+    val radius = lerp(fullCircle, roundedRect, progress)
+
+    drawRoundRect(
+        color = color(),
+        cornerRadius = CornerRadius(radius)
+    )
+
+    drawContent()
+}
+
+private fun lerp(start: Float, stop: Float, fraction: Float): Float {
+    return start + (stop - start) * fraction
 }
 
 private object EditModeTileDefaults {
