@@ -88,7 +88,6 @@ public class CellularTile extends QSTileImpl<BooleanState> {
             QSLogger qsLogger,
             NetworkController networkController,
             KeyguardStateController keyguardStateController
-
     ) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
                 statusBarStateController, activityStarter, qsLogger);
@@ -100,7 +99,9 @@ public class CellularTile extends QSTileImpl<BooleanState> {
 
     @Override
     public BooleanState newTileState() {
-        return new BooleanState();
+        BooleanState s = new BooleanState();
+        s.handlesSecondaryClick = true;
+        return s;
     }
 
     @Override
@@ -113,6 +114,18 @@ public class CellularTile extends QSTileImpl<BooleanState> {
 
     @Override
     protected void handleClick(@Nullable Expandable expandable) {
+        // Open cellular settings
+        if (getState().state == Tile.STATE_UNAVAILABLE) {
+            mActivityStarter.postStartActivityDismissingKeyguard(
+                    new Intent(Settings.ACTION_WIRELESS_SETTINGS), 0);
+            return;
+        }
+        mActivityStarter.postStartActivityDismissingKeyguard(getCellularSettingIntent(), 0);
+    }
+
+    @Override
+    protected void handleSecondaryClick(@Nullable Expandable expandable) {
+        // Toggle mobile data
         if (getState().state == Tile.STATE_UNAVAILABLE) {
             return;
         }
@@ -153,11 +166,6 @@ public class CellularTile extends QSTileImpl<BooleanState> {
     }
 
     @Override
-    protected void handleSecondaryClick(@Nullable Expandable expandable) {
-        handleLongClick(expandable);
-    }
-
-    @Override
     public CharSequence getTileLabel() {
         return mContext.getString(R.string.quick_settings_cellular_detail_title);
     }
@@ -174,6 +182,7 @@ public class CellularTile extends QSTileImpl<BooleanState> {
         boolean mobileDataEnabled = mDataController.isMobileDataSupported()
                 && mDataController.isMobileDataEnabled();
         state.value = mobileDataEnabled;
+        state.dualTarget = true;
         state.expandedAccessibilityClassName = Switch.class.getName();
         if (cb.noSim) {
             state.icon = ResourceIcon.get(R.drawable.ic_qs_no_sim);

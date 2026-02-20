@@ -48,7 +48,6 @@ import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.qs.tileimpl.QSIconViewImpl;
 import com.android.systemui.qs.tileimpl.QSTileImpl;
 import com.android.systemui.res.R;
-import com.android.systemui.statusbar.connectivity.AccessPointController;
 import com.android.systemui.statusbar.connectivity.NetworkController;
 import com.android.systemui.statusbar.connectivity.SignalCallback;
 import com.android.systemui.statusbar.connectivity.WifiIcons;
@@ -64,7 +63,7 @@ public class WifiTile extends QSTileImpl<BooleanState> {
     private static final Intent WIFI_SETTINGS = new Intent(Settings.ACTION_WIFI_SETTINGS);
 
     protected final NetworkController mController;
-    private final AccessPointController mWifiController;
+    private final Handler mHandler;
     private final QSTile.BooleanState mStateBeforeClick = newTileState();
 
     protected final WifiSignalCallback mSignalCallback = new WifiSignalCallback();
@@ -81,20 +80,21 @@ public class WifiTile extends QSTileImpl<BooleanState> {
             StatusBarStateController statusBarStateController,
             ActivityStarter activityStarter,
             QSLogger qsLogger,
-            NetworkController networkController,
-            AccessPointController accessPointController
+            NetworkController networkController
     ) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
                 statusBarStateController, activityStarter, qsLogger);
         mController = networkController;
-        mWifiController = accessPointController;
+        mHandler = mainHandler;
         mController.observe(getLifecycle(), mSignalCallback);
         mStateBeforeClick.spec = "wifi";
     }
 
     @Override
     public BooleanState newTileState() {
-        return new BooleanState();
+        BooleanState s = new BooleanState();
+        s.handlesSecondaryClick = true;
+        return s;
     }
 
     @Override
@@ -104,7 +104,13 @@ public class WifiTile extends QSTileImpl<BooleanState> {
 
     @Override
     protected void handleClick(@Nullable Expandable expandable) {
-        // Secondary clicks are header clicks, just toggle.
+        // Open WiFi settings
+        mActivityStarter.postStartActivityDismissingKeyguard(WIFI_SETTINGS, 0);
+    }
+
+    @Override
+    protected void handleSecondaryClick(@Nullable Expandable expandable) {
+        // Toggle WiFi
         mState.copyTo(mStateBeforeClick);
         boolean wifiEnabled = mState.value;
         // Immediately enter transient state when turning on wifi.
@@ -118,18 +124,6 @@ public class WifiTile extends QSTileImpl<BooleanState> {
                     refreshState();
                 }
             }, QSIconViewImpl.QS_ANIM_LENGTH);
-        }
-    }
-
-    @Override
-    protected void handleSecondaryClick(@Nullable Expandable expandable) {
-        if (!mWifiController.canConfigWifi()) {
-            mActivityStarter.postStartActivityDismissingKeyguard(
-                    new Intent(Settings.ACTION_WIFI_SETTINGS), 0);
-            return;
-        }
-        if (!mState.value) {
-            mController.setWifiEnabled(true);
         }
     }
 
