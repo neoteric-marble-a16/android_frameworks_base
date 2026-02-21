@@ -135,6 +135,7 @@ import com.android.systemui.scrim.ScrimDrawable;
 import com.android.systemui.settings.UserTracker;
 import com.android.systemui.shade.ShadeController;
 import com.android.systemui.shade.shared.flag.ShadeWindowGoesAround;
+import com.android.systemui.statusbar.BlurUtils;
 import com.android.systemui.statusbar.NotificationShadeWindowController;
 import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.phone.LightBarController;
@@ -283,6 +284,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     private final DialogTransitionAnimator mDialogTransitionAnimator;
     private final UserLogoutInteractor mLogoutInteractor;
     private final GlobalActionsInteractor mInteractor;
+    private final BlurUtils mBlurUtils;
     private final Lazy<DisplayWindowPropertiesRepository> mDisplayWindowPropertiesRepositoryLazy;
     private final PowerManager mPowerManager;
     private final Handler mHandler;
@@ -415,7 +417,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             UserLogoutInteractor logoutInteractor,
             GlobalActionsInteractor interactor,
             Lazy<DisplayWindowPropertiesRepository> displayWindowPropertiesRepository,
-            PowerManager powerManager) {
+            PowerManager powerManager,
+            BlurUtils blurUtils) {
         mContext = context;
         mWindowManagerFuncs = windowManagerFuncs;
         mAudioManager = audioManager;
@@ -452,6 +455,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         mSelectedUserInteractor = selectedUserInteractor;
         mLogoutInteractor = logoutInteractor;
         mInteractor = interactor;
+        mBlurUtils = blurUtils;
         mDisplayWindowPropertiesRepositoryLazy = displayWindowPropertiesRepository;
         mPowerManager = powerManager;
 
@@ -861,7 +865,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 mShadeController,
                 mKeyguardUpdateMonitor,
                 mLockPatternUtils,
-                mSelectedUserInteractor);
+                mSelectedUserInteractor,
+                mBlurUtils);
 
         dialog.setOnDismissListener(this);
         dialog.setOnShowListener(this);
@@ -2623,6 +2628,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         private KeyguardUpdateMonitor mKeyguardUpdateMonitor;
         private SelectedUserInteractor mSelectedUserInteractor;
         private LockPatternUtils mLockPatternUtils;
+        private BlurUtils mBlurUtils;
         private float mWindowDimAmount;
 
         protected ViewGroup mContainer;
@@ -2706,7 +2712,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 ShadeController shadeController,
                 KeyguardUpdateMonitor keyguardUpdateMonitor,
                 LockPatternUtils lockPatternUtils,
-                SelectedUserInteractor selectedUserInteractor) {
+                SelectedUserInteractor selectedUserInteractor,
+                BlurUtils blurUtils) {
             // We set dismissOnDeviceLock to false because we have a custom broadcast receiver to
             // dismiss this dialog when the device is locked.
             super(context, themeRes, false /* dismissOnDeviceLock */);
@@ -2727,6 +2734,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             mShadeController = shadeController;
             mKeyguardUpdateMonitor = keyguardUpdateMonitor;
             mLockPatternUtils = lockPatternUtils;
+            mBlurUtils = blurUtils;
             mGestureDetector = new GestureDetector(mContext, mGestureListener);
             mSelectedUserInteractor = selectedUserInteractor;
         }
@@ -3020,6 +3028,11 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 float alpha = isEnter ? progress : 1 - progress;
                 mGlobalActionsLayout.setAlpha(alpha);
                 window.setDimAmount(mWindowDimAmount * alpha);
+
+                if (mBlurUtils.supportsBlursOnWindows()) {
+                    mBlurUtils.applyBlur(window.getDecorView().getViewRootImpl(),
+                             (int) mBlurUtils.blurRadiusOfRatio(progress), false);
+                }
 
                 // TODO(b/213872558): Support devices that don't have their power button on the
                 // right.
