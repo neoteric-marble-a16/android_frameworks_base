@@ -29,6 +29,7 @@ import com.android.settingslib.devicestate.DeviceStateAutoRotateSettingManagerPr
 import com.android.settingslib.devicestate.PosturesHelper;
 import com.android.settingslib.devicestate.SecureSettings;
 import com.android.settingslib.notification.modes.ZenIconLoader;
+import com.android.systemui.animation.DialogTransitionAnimator;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Application;
 import com.android.systemui.dagger.qualifiers.Background;
@@ -36,6 +37,7 @@ import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dagger.qualifiers.UiBackground;
 import com.android.systemui.log.LogBuffer;
 import com.android.systemui.log.LogBufferFactory;
+import com.android.systemui.plugins.ActivityStarter;
 import com.android.systemui.settings.UserTracker;
 import com.android.systemui.statusbar.connectivity.AccessPointController;
 import com.android.systemui.statusbar.connectivity.AccessPointControllerImpl;
@@ -77,6 +79,8 @@ import com.android.systemui.statusbar.policy.SplitShadeStateController;
 import com.android.systemui.statusbar.policy.SplitShadeStateControllerImpl;
 import com.android.systemui.statusbar.policy.UserInfoController;
 import com.android.systemui.statusbar.policy.UserInfoControllerImpl;
+import com.android.systemui.statusbar.policy.VolumeController;
+import com.android.systemui.statusbar.policy.VolumeDialogDelegate;
 import com.android.systemui.statusbar.policy.WalletController;
 import com.android.systemui.statusbar.policy.WalletControllerImpl;
 import com.android.systemui.statusbar.policy.ZenModeController;
@@ -93,6 +97,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 import javax.inject.Named;
+import javax.inject.Provider;
 
 /** Dagger Module for code in the statusbar.policy package. */
 @Module(includes = {DeviceProvisioningRepositoryModule.class})
@@ -298,5 +303,26 @@ public interface StatusBarPolicyModule {
     static ZenIconLoader provideZenIconLoader(
             @UiBackground ExecutorService backgroundExecutorService) {
         return new ZenIconLoader(backgroundExecutorService);
+    }
+
+    /** Provides a {@link VolumeController} */
+    @Provides
+    @SysUISingleton
+    static VolumeController provideVolumeController(
+            @Application Context context,
+            DialogTransitionAnimator dialogTransitionAnimator,
+            Provider<VolumeDialogDelegate> dialogDelegateProvider,
+            KeyguardStateController keyguardStateController,
+            ActivityStarter activityStarter,
+            @Main Handler mainHandler
+    ) {
+        return new VolumeController(
+                context,
+                dialogTransitionAnimator,
+                dialogDelegateProvider,
+                keyguardStateController,
+                activityStarter,
+                mainHandler
+        );
     }
 }
