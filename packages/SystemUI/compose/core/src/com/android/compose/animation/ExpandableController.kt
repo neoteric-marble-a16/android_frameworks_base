@@ -402,6 +402,12 @@ internal class ExpandableControllerImpl(
             override fun createExitController(): TransitionAnimator.Controller {
                 val delegate = transitionController()
                 return object : TransitionAnimator.Controller by delegate {
+                    override fun onTransitionAnimationStart(isExpandingFullyAbove: Boolean) {
+                        delegate.onTransitionAnimationStart(isExpandingFullyAbove)
+                        // Use the shade's overlay for exit animation, not the dialog's
+                        overlay = composeViewRoot.rootView.overlay as ViewGroupOverlay
+                    }
+
                     override fun onTransitionAnimationEnd(isExpandingFullyAbove: Boolean) {
                         delegate.onTransitionAnimationEnd(isExpandingFullyAbove)
                         isDialogShowing = false
