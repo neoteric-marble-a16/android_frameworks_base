@@ -65,7 +65,6 @@ import android.view.Window;
 import android.view.WindowManagerGlobal;
 
 import com.android.internal.content.ReferrerIntent;
-import com.android.internal.util.PropImitationHooks;
 
 import java.io.File;
 import java.lang.annotation.Retention;
@@ -1350,7 +1349,6 @@ public class Instrumentation {
         Application app = getFactory(context.getPackageName())
                 .instantiateApplication(cl, className);
         app.attach(context);
-        PropImitationHooks.setProps(context);
         return app;
     }
     
@@ -1368,7 +1366,6 @@ public class Instrumentation {
             ClassNotFoundException {
         Application app = (Application)clazz.newInstance();
         app.attach(context);
-        PropImitationHooks.setProps(context);
         return app;
     }
 
