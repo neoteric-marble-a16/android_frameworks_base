@@ -489,6 +489,5 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.HIDE_APPLIST, ANY_STRING_VALIDATOR);
         VALIDATORS.put(Secure.QS_SHOW_DATA_USAGE, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.QS_DATA_USAGE_CYCLE_TYPE, new InclusiveIntegerRangeValidator(0, 1));
-        VALIDATORS.put(Secure.GMS_CERT_CHAIN, BOOLEAN_VALIDATOR);
     }
 }
