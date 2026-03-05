@@ -13426,19 +13426,6 @@ public final class Settings {
         public static final String HBM_SETTING_KEY =
                 "com.android.server.display.HBM_SETTING_KEY";
 
-        /**
-         * User selectable PIF data.
-         * @hide
-         */
-        @Readable
-        public static final String PIF_DATA = "pif_data";
-
-        /**
-         * PIF data fetched from our repo.
-         * @hide
-         */
-        @Readable
-        public static final String FETCHED_PIF = "fetched_pif";
 
         /**
          * Our GameSpace can't write to device_config directly [GTS]
